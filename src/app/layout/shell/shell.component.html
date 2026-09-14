@@ -1,0 +1,13 @@
+<div class="shell" [class.shell--collapsed]="collapsed()">
+  <app-sidebar [collapsed]="collapsed()" (toggle)="toggleSidebar()" />
+
+  <div class="main">
+    <app-topbar (menuClick)="toggleSidebar()" />
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <app-footer />
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <div class="sidebar__logo">
+      <mat-icon>local_activity</mat-icon>
+    </div>
+    @if (!collapsed()) {
+      <div class="sidebar__brand-text">
+        <span class="sidebar__brand-name">SAPUMAL</span>
+        <span class="sidebar__brand-sub">THEATRE · ADMIN</span>
+      </div>
+    }
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of nav; track item.route) {
+      <a
+        class="nav-link"
+        [routerLink]="item.route"
+        routerLinkActive="nav-link--active"
+        [matTooltip]="collapsed() ? item.label : ''"
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ item.icon }}</mat-icon>
+        @if (!collapsed()) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__footer">
+    <button
+      mat-icon-button
+      (click)="toggle.emit()"
+      [matTooltip]="collapsed() ? 'Expand' : 'Collapse'"
+    >
+      <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+</aside>

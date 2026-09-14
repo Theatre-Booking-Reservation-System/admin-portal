@@ -1,0 +1,54 @@
+<header class="topbar">
+  <button mat-icon-button class="topbar__menu" (click)="menuClick.emit()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <div class="topbar__search">
+    <mat-icon>search</mat-icon>
+    <input type="text" placeholder="Search productions, bookings, customers…" />
+  </div>
+
+  <span class="spacer"></span>
+
+  <!-- Language switcher -->
+  <button mat-button class="topbar__lang" [matMenuTriggerFor]="langMenu">
+    <mat-icon>language</mat-icon>
+    <span>English</span>
+    <mat-icon>arrow_drop_down</mat-icon>
+  </button>
+  <mat-menu #langMenu="matMenu">
+    <button mat-menu-item>English</button>
+    <button mat-menu-item>සිංහල</button>
+    <button mat-menu-item>தமிழ்</button>
+  </mat-menu>
+
+  <!-- Theme toggle -->
+  <button
+    mat-icon-button
+    (click)="toggleTheme()"
+    [matTooltip]="theme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
+  >
+    <mat-icon>{{ theme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+
+  <!-- Notifications -->
+  <button mat-icon-button matTooltip="Notifications" class="topbar__bell">
+    <mat-icon>notifications</mat-icon>
+    <span class="topbar__badge">3</span>
+  </button>
+
+  <!-- User -->
+  <button mat-button class="topbar__user" [matMenuTriggerFor]="userMenu">
+    <span class="avatar">AU</span>
+    <span class="topbar__user-meta">
+      <span class="topbar__user-name">Admin User</span>
+      <span class="topbar__user-role">Administrator</span>
+    </span>
+    <mat-icon>arrow_drop_down</mat-icon>
+  </button>
+  <mat-menu #userMenu="matMenu">
+    <button mat-menu-item><mat-icon>person</mat-icon><span>Profile</span></button>
+    <button mat-menu-item><mat-icon>settings</mat-icon><span>Settings</span></button>
+    <button mat-menu-item><mat-icon>logout</mat-icon><span>Sign out</span></button>
+  </mat-menu>
+</header>
