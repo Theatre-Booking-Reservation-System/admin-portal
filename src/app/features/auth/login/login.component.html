@@ -1,0 +1,76 @@
+<div class="login">
+  <!-- Left brand text over the background image -->
+  <div class="login__brand">
+    <p class="login__brand-title">ART<br />BRINGS US<br />TOGETHER</p>
+    <div class="login__diamond"><span></span><i></i><span></span></div>
+    <p class="login__brand-sub">PEOPLE • STORIES • EXPERIENCES</p>
+  </div>
+
+  <!-- Login card (right) -->
+  <form class="login__card" (submit)="onSubmit($event)">
+    <img class="login__logo" src="assets/logo.png" alt="Sapumal Theatre" />
+
+    <h1 class="login__heading">Admin Portal</h1>
+    <p class="login__subtitle">Sign in to manage productions, bookings, and more.</p>
+
+    <label class="field">
+      <mat-icon class="field__icon">person</mat-icon>
+      <input
+        type="text"
+        name="username"
+        placeholder="Username or Email"
+        autocomplete="username"
+        [(ngModel)]="username"
+        required
+      />
+    </label>
+
+    <label class="field">
+      <mat-icon class="field__icon">lock</mat-icon>
+      <input
+        [type]="showPassword() ? 'text' : 'password'"
+        name="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        [(ngModel)]="password"
+        required
+      />
+      <button
+        type="button"
+        class="field__toggle"
+        (click)="togglePassword()"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+      >
+        <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </label>
+
+    <div class="login__row">
+      <label class="checkbox">
+        <input type="checkbox" name="remember" [(ngModel)]="remember" />
+        <span>Remember me</span>
+      </label>
+      <a class="login__forgot" href="#">Forgot password?</a>
+    </div>
+
+    <button type="submit" class="login__submit">
+      Sign In <mat-icon>arrow_forward</mat-icon>
+    </button>
+
+    <div class="login__secure">
+      <span class="login__secure-line"></span>
+      <span class="login__secure-text"><mat-icon>verified_user</mat-icon> SECURE ACCESS</span>
+      <span class="login__secure-line"></span>
+    </div>
+  </form>
+
+  <!-- Footer -->
+  <footer class="login__footer">
+    <span>© {{ year }} Sapumal Theatre. All rights reserved.</span>
+    <nav class="login__footer-links">
+      <a href="#">Privacy</a><span>|</span>
+      <a href="#">Terms</a><span>|</span>
+      <a href="#">Support</a>
+    </nav>
+  </footer>
+</div>

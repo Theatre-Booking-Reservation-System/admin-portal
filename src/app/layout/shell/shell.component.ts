@@ -9,7 +9,7 @@ import { FooterComponent } from '../footer/footer.component';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, TopbarComponent, FooterComponent],
   templateUrl: './shell.component.html',
-  styleUrl: './shell.component.css',
+  styleUrl: './shell.component.scss',
 })
 export class ShellComponent {
   /**

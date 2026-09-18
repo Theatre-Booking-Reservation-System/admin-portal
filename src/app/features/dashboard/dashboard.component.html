@@ -1,0 +1,153 @@
+<!-- Page header -->
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="muted page-head__sub">Welcome back, Admin — here's what's happening today.</p>
+  </div>
+  <span class="date-pill">
+    <mat-icon>calendar_today</mat-icon>
+    {{ today }}
+  </span>
+</header>
+
+<!-- Stat cards -->
+<section class="stats">
+  @for (s of stats; track s.label) {
+    <article class="card stat">
+      <div class="stat__icon"><mat-icon>{{ s.icon }}</mat-icon></div>
+      <div class="stat__body">
+        <span class="stat__label">{{ s.label }}</span>
+        <span class="stat__value">{{ s.value }}</span>
+        @if (s.delta) {
+          <span class="stat__delta" [class.stat__delta--up]="s.deltaUp">
+            <mat-icon>{{ s.deltaUp ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            {{ s.delta }}
+          </span>
+        }
+        @if (s.note) {
+          <span class="pill pill--warning stat__note">{{ s.note }}</span>
+        }
+      </div>
+    </article>
+  }
+</section>
+
+<!-- Chart + Today's shows -->
+<section class="grid-2">
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Booking Overview</h2>
+      <span class="select-chip">This Month <mat-icon>expand_more</mat-icon></span>
+    </header>
+
+    <div class="chart">
+      <div class="chart__yaxis">
+        <span>200</span><span>150</span><span>100</span><span>50</span><span>0</span>
+      </div>
+      <div class="chart__plot">
+        <div class="chart__bars">
+          @for (p of chart; track p.label) {
+            <div class="chart__bar-col">
+              <div class="chart__bar" [style.height.%]="p.bookings * 100"></div>
+            </div>
+          }
+        </div>
+        <svg class="chart__line" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline [attr.points]="revenueLine" />
+        </svg>
+        <div class="chart__xaxis">
+          @for (p of chart; track p.label) {
+            <span>{{ p.label }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend__item"><i class="legend__dot legend__dot--bar"></i> Bookings</span>
+      <span class="legend__item"><i class="legend__dot legend__dot--line"></i> Revenue (LKR)</span>
+    </div>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Today's Shows</h2>
+      <a class="link" href="#">View All →</a>
+    </header>
+
+    <ul class="shows">
+      @for (show of todayShows; track show.title) {
+        <li class="show">
+          <span class="show__thumb">{{ show.abbr }}</span>
+          <div class="show__meta">
+            <span class="show__title">{{ show.title }}</span>
+            <span class="show__time muted">{{ show.time }}</span>
+            <span class="show__seats muted">{{ show.seats }}</span>
+          </div>
+          <span
+            class="pill"
+            [class.pill--success]="show.session === 'Matinee'"
+            [class.pill--info]="show.session === 'Evening'"
+          >{{ show.session }}</span>
+        </li>
+      }
+    </ul>
+  </article>
+</section>
+
+<!-- Recent bookings + Quick actions -->
+<section class="grid-2 grid-2--wide">
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Recent Bookings</h2>
+      <a class="link" href="#">View All →</a>
+    </header>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Booking ID</th>
+            <th>Customer</th>
+            <th>Show</th>
+            <th>Date &amp; Time</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of recentBookings; track b.id) {
+            <tr>
+              <td>{{ b.id }}</td>
+              <td>{{ b.customer }}</td>
+              <td>{{ b.show }}</td>
+              <td>{{ b.dateTime }}</td>
+              <td>{{ b.amount }}</td>
+              <td><span class="pill" [class]="statusClass(b.status)">{{ b.status }}</span></td>
+              <td>
+                <button class="icon-btn" aria-label="View booking"><mat-icon>visibility</mat-icon></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Quick Actions</h2>
+    </header>
+
+    <div class="actions">
+      @for (a of quickActions; track a.title) {
+        <button class="action">
+          <span class="action__icon"><mat-icon>{{ a.icon }}</mat-icon></span>
+          <span class="action__title">{{ a.title }}</span>
+          <span class="action__sub muted">{{ a.subtitle }}</span>
+        </button>
+      }
+    </div>
+  </article>
+</section>
