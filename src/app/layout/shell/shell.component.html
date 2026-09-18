@@ -1,5 +1,18 @@
-<div class="shell" [class.shell--collapsed]="collapsed()">
-  <app-sidebar [collapsed]="collapsed()" (toggle)="toggleSidebar()" />
+<div
+  class="shell"
+  [class.shell--collapsed]="collapsed()"
+  [class.shell--drawer-open]="drawerOpen()"
+>
+  <app-sidebar
+    class="shell__sidebar"
+    [collapsed]="collapsed()"
+    (navigate)="closeDrawer()"
+  />
+
+  <!-- Backdrop: only rendered when the drawer is open-->
+  @if (drawerOpen()) {
+    <div class="shell__backdrop" (click)="closeDrawer()"></div>
+  }
 
   <div class="main">
     <app-topbar (menuClick)="toggleSidebar()" />

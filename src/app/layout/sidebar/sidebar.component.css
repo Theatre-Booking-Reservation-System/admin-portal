@@ -1,0 +1,201 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg-top);
+  background-image: url('/assets/curtain.png');
+  background-size: 100% auto;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  border-right: 1px solid var(--sidebar-border);
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1rem 0.5rem;
+  flex: none;
+}
+
+.sidebar__logo {
+  width: 100%;
+  max-width: 132px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sidebar__nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+/* ── Tagline block above the curtain ─────────────────────────────────────── */
+.sidebar__tagline {
+  flex: none;
+  padding: 0.35rem 1.25rem 0.4rem;
+  text-align: center;
+}
+.sidebar__divider {
+  height: 1px;
+  background: var(--brand-border);
+  margin: 0 0.25rem 0.75rem;
+}
+.sidebar__tagline-text {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 3.5px;
+  line-height: 1.6;
+  color: var(--brand-gold);
+}
+.sidebar__diamond {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 0.4rem;
+}
+.sidebar__diamond span {
+  width: 30px;
+  height: 1px;
+  background: var(--brand-gold);
+  opacity: 0.8;
+}
+.sidebar__diamond i {
+  width: 5px;
+  height: 5px;
+  background: var(--brand-gold);
+  transform: rotate(45deg);
+}
+
+/* Reserves space at the bottom so nav/tagline don't sit over the drape. */
+.sidebar__curtain-spacer {
+  flex: none;
+  height: 56px;
+}
+
+/* ── Nav links ───────────────────────────────────────────────────────────── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  color: var(--sidebar-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-link__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--sidebar-icon);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.nav-link__icon mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.nav-link:hover {
+  background: var(--sidebar-hover);
+}
+
+.nav-link--active,
+.nav-link--active:hover {
+  background: var(--sidebar-active);
+  color: var(--sidebar-active-text);
+  font-weight: 600;
+}
+.nav-link--active .nav-link__icon {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--sidebar-active-icon);
+}
+
+/* ── Collapsed (icon-rail) mode — desktop ☰ toggle ───────────────────────── */
+.sidebar--collapsed {
+  background-image: none;
+}
+.sidebar--collapsed .sidebar__logo {
+  max-width: 42px;
+}
+.sidebar--collapsed .sidebar__brand {
+  padding: 0.9rem 0.5rem 0.5rem;
+}
+.sidebar--collapsed .nav-link {
+  justify-content: center;
+  padding: 0.45rem;
+}
+.sidebar--collapsed .nav-link__label,
+.sidebar--collapsed .sidebar__tagline,
+.sidebar--collapsed .sidebar__curtain-spacer {
+  display: none;
+}
+
+/* ── Tablet: always a rail ───────────────────────────────────────────────── */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .sidebar {
+    background-image: none;
+  }
+  .sidebar__logo {
+    max-width: 42px;
+  }
+  .sidebar__brand {
+    padding: 0.9rem 0.5rem 0.5rem;
+  }
+  .nav-link {
+    justify-content: center;
+    padding: 0.45rem;
+  }
+  .nav-link__label,
+  .sidebar__tagline,
+  .sidebar__curtain-spacer {
+    display: none;
+  }
+}
+
+/* ── Mobile drawer: always show the FULL sidebar ─────────────────────────── */
+@media (max-width: 767px) {
+  .sidebar--collapsed {
+    background-image: url('/assets/curtain.png');
+  }
+  .sidebar--collapsed .sidebar__logo {
+    max-width: 132px;
+  }
+  .sidebar--collapsed .nav-link {
+    justify-content: flex-start;
+    padding: 0.45rem 0.6rem;
+  }
+  .sidebar--collapsed .nav-link__label {
+    display: inline;
+  }
+  .sidebar--collapsed .sidebar__tagline,
+  .sidebar--collapsed .sidebar__curtain-spacer {
+    display: block;
+  }
+}

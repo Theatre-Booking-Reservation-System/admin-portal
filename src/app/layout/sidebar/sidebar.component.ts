@@ -15,14 +15,14 @@ export interface NavItem {
   standalone: true,
   imports: [RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatTooltipModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss',
+  styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
   /** Collapsed state is owned by the shell and passed in. */
   readonly collapsed = input<boolean>(false);
 
-  /** Emitted when the user clicks the collapse toggle. */
-  readonly toggle = output<void>();
+  /** Emitted when a nav item is clicked (used to close the mobile drawer). */
+  readonly navigate = output<void>();
 
   readonly nav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },

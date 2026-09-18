@@ -10,7 +10,7 @@ import { ThemeService } from '../../core/services/theme.service';
   standalone: true,
   imports: [MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule],
   templateUrl: './topbar.component.html',
-  styleUrl: './topbar.component.scss',
+  styleUrl: './topbar.component.css',
 })
 export class TopbarComponent {
   private readonly themeService = inject(ThemeService);

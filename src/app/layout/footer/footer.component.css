@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--footer-bg);
+  color: var(--brand-muted);
+  font-size: 0.8rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.footer a {
+  color: var(--brand-muted);
+}
+.footer a:hover {
+  color: var(--brand-maroon-2);
+}

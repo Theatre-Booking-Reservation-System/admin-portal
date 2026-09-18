@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.topbar {
+  height: 64px;
+  background: var(--header-bg);
+  color: var(--header-text);
+  border-bottom: 1px solid var(--brand-border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Icon buttons in the bar use the themed topbar icon colour. */
+.topbar button,
+.topbar .mat-mdc-button,
+.topbar mat-icon {
+  color: var(--topbar-icon);
+}
+
+.topbar__menu {
+  display: inline-flex;
+  color: var(--topbar-icon);
+}
+
+.topbar__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  width: min(440px, 42vw);
+}
+.topbar__search mat-icon {
+  color: var(--topbar-icon);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+.topbar__search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  color: var(--brand-text);
+}
+.topbar__search input::placeholder {
+  color: var(--brand-muted);
+}
+
+.topbar__bell {
+  position: relative;
+  color: var(--topbar-icon);
+}
+.topbar__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--brand-maroon);
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0 4px;
+  min-width: 15px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.topbar__user {
+  height: 48px;
+  padding: 0 0.5rem 0 0.35rem;
+  margin-left: 0.5rem;
+  border-radius: 999px;
+}
+
+.topbar__user ::ng-deep .mdc-button__label,
+.topbar__user .mdc-button__label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.topbar__user mat-icon {
+  color: var(--topbar-icon);
+}
+
+.topbar__user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+.topbar__user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--brand-text);
+}
+.topbar__user-role {
+  font-size: 0.68rem;
+  color: var(--brand-muted);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand-gold);
+  color: var(--brand-maroon-dark);
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .topbar__search {
+    width: auto;
+    flex: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar {
+    padding: 0 0.75rem;
+  }
+  .topbar__user-meta {
+    display: none;
+  }
+}

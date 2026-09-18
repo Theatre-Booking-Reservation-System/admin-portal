@@ -6,7 +6,7 @@ const STORAGE_KEY = 'sapumal-admin-theme';
 
 /**
  * Owns the app colour theme. Writes a `data-theme` attribute on <html> which
- * the CSS custom properties in styles.scss react to, so the whole UI recolours
+ * the CSS custom properties in styles.css react to, so the whole UI recolours
  * instantly. The choice is persisted to localStorage.
  */
 @Injectable({ providedIn: 'root' })

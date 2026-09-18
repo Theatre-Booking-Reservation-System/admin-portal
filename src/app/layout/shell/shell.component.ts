@@ -9,13 +9,24 @@ import { FooterComponent } from '../footer/footer.component';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, TopbarComponent, FooterComponent],
   templateUrl: './shell.component.html',
-  styleUrl: './shell.component.scss',
+  styleUrl: './shell.component.css',
 })
 export class ShellComponent {
-  /** Sidebar collapse state — owned here and shared with the sidebar. */
+  /**
+   * Desktop rail toggle
+   */
   readonly collapsed = signal(false);
 
+  /** Mobile only: whether the off-canvas drawer is open. */
+  readonly drawerOpen = signal(false);
+
+  /**  On desktop CSS uses `collapsed`; on mobile it uses `drawerOpen`. */
   toggleSidebar() {
     this.collapsed.update((v) => !v);
+    this.drawerOpen.update((v) => !v);
+  }
+
+  closeDrawer() {
+    this.drawerOpen.set(false);
   }
 }
