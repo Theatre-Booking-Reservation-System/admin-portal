@@ -19,6 +19,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
+      {
+        path: 'productions',
+        loadComponent: () =>
+          import('./features/productions/productions.component').then((m) => m.ProductionsComponent),
+      },
+      {
+        path: 'productions/new',
+        loadComponent: () =>
+          import('./features/productions/production-form/production-form.component').then(
+            (m) => m.ProductionFormComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

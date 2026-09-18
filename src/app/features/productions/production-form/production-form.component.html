@@ -1,0 +1,134 @@
+<form (submit)="save($event)">
+  <!-- Breadcrumb -->
+  <nav class="crumbs">
+    <a routerLink="/productions">Productions</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>Add New Production</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Add New Production</h1>
+      <p class="muted page-head__sub">Create a new theatre production. Fill in the details below.</p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn--ghost" routerLink="/productions">Cancel</a>
+      <button type="submit" class="btn btn--primary">Save Production</button>
+    </div>
+  </header>
+
+  <!-- Basic Information + Poster -->
+  <div class="grid-2">
+    <section class="card">
+      <h2 class="card-title">Basic Information</h2>
+
+      <label class="lbl">Title <span class="req">*</span></label>
+      <input class="input" type="text" placeholder="Enter production title" [(ngModel)]="title" name="title" required />
+
+      <div class="grid-2-inner">
+        <div>
+          <label class="lbl">Language <span class="req">*</span></label>
+          <select class="input" [(ngModel)]="language" name="language" required>
+            <option value="" disabled selected>Select language</option>
+            @for (l of languages; track l) { <option [value]="l">{{ l }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Genre <span class="req">*</span></label>
+          <select class="input" [(ngModel)]="genre" name="genre" required>
+            <option value="" disabled selected>Select genre</option>
+            @for (g of genres; track g) { <option [value]="g">{{ g }}</option> }
+          </select>
+        </div>
+      </div>
+
+      <label class="lbl">Description <span class="req">*</span></label>
+      <textarea
+        class="input textarea"
+        placeholder="Enter production description..."
+        maxlength="500"
+        rows="4"
+        [value]="description"
+        (input)="onDescInput($any($event.target).value)"
+        name="description"
+      ></textarea>
+      <span class="counter muted">{{ descLength() }}/500 characters</span>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Poster Image</h2>
+      <div class="upload">
+        <mat-icon>cloud_upload</mat-icon>
+        <p>Click to upload or drag and drop</p>
+        <span class="muted">PNG, JPG. Max 5MB</span>
+      </div>
+
+      <label class="lbl">Status</label>
+      <div class="radios">
+        <label class="radio">
+          <input type="radio" name="status" value="Active" [(ngModel)]="status" />
+          <span>Active</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="status" value="Inactive" [(ngModel)]="status" />
+          <span>Inactive</span>
+        </label>
+      </div>
+    </section>
+  </div>
+
+  <!-- Schedule -->
+  <section class="card">
+    <h2 class="card-title">Schedule</h2>
+    <div class="grid-2-inner">
+      <div>
+        <label class="lbl">Start Date <span class="req">*</span></label>
+        <div class="input input--icon">
+          <mat-icon>calendar_today</mat-icon>
+          <input type="date" [(ngModel)]="startDate" name="startDate" required />
+        </div>
+      </div>
+      <div>
+        <label class="lbl">End Date <span class="req">*</span></label>
+        <div class="input input--icon">
+          <mat-icon>calendar_today</mat-icon>
+          <input type="date" [(ngModel)]="endDate" name="endDate" required />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Additional details + Media -->
+  <div class="grid-2">
+    <section class="card">
+      <h2 class="card-title">Additional Details</h2>
+      <label class="lbl">Cast</label>
+      <textarea class="input" rows="2" placeholder="Enter main cast (optional)..." [(ngModel)]="cast" name="cast"></textarea>
+      <label class="lbl">Crew</label>
+      <textarea class="input" rows="2" placeholder="Enter crew details (optional)..." [(ngModel)]="crew" name="crew"></textarea>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Media &amp; Documents</h2>
+      <div class="grid-2-inner">
+        <div>
+          <label class="lbl">Gallery Images</label>
+          <div class="upload upload--sm">
+            <mat-icon>cloud_upload</mat-icon>
+            <p>Click to upload images</p>
+            <span class="muted">PNG, JPG. Max 5MB each</span>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">Additional Documents</label>
+          <div class="upload upload--sm">
+            <mat-icon>cloud_upload</mat-icon>
+            <p>Click to upload files</p>
+            <span class="muted">PDF, DOC, DOCX. Max 10MB each</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</form>

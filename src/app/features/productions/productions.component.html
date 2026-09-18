@@ -1,0 +1,88 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Productions</h1>
+    <p class="muted page-head__sub">Manage your theatre productions, add new shows and update information.</p>
+  </div>
+  <a class="btn btn--primary" routerLink="/productions/new">
+    <mat-icon>add</mat-icon> Add Production
+  </a>
+</header>
+
+<section class="card">
+  <!-- Filter tabs + search -->
+  <div class="toolbar">
+    <div class="tabs">
+      @for (t of filters; track t.key) {
+        <button
+          class="tab"
+          [class.tab--active]="filter() === t.key"
+          (click)="filter.set(t.key)"
+        >
+          {{ t.label }} ({{ t.count }})
+        </button>
+      }
+    </div>
+
+    <div class="search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search productions..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Poster</th>
+          <th>Title</th>
+          <th>Language</th>
+          <th>Genre</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of filtered(); track p.id) {
+          <tr>
+            <td><span class="poster">{{ p.abbr }}</span></td>
+            <td class="cell-title">{{ p.title }}</td>
+            <td>{{ p.language }}</td>
+            <td>{{ p.genre }}</td>
+            <td>{{ p.startDate }}</td>
+            <td>{{ p.endDate }}</td>
+            <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
+            <td>
+              <div class="actions">
+                <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
+                <button class="icon-btn" aria-label="View"><mat-icon>visibility</mat-icon></button>
+                <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="empty">No productions found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer / pagination -->
+  <div class="table-foot">
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ productions.length }} productions</span>
+    <div class="pager">
+      <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+      <button class="pager__btn pager__btn--active">1</button>
+      <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+  </div>
+</section>
