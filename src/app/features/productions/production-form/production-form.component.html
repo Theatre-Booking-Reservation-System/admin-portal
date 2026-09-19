@@ -3,18 +3,22 @@
   <nav class="crumbs">
     <a routerLink="/productions">Productions</a>
     <mat-icon>chevron_right</mat-icon>
-    <span>Add New Production</span>
+    <span>{{ isEdit() ? 'Edit Production' : 'Add New Production' }}</span>
   </nav>
 
   <!-- Header -->
   <header class="page-head">
     <div>
-      <h1 class="page-title">Add New Production</h1>
-      <p class="muted page-head__sub">Create a new theatre production. Fill in the details below.</p>
+      <h1 class="page-title">{{ isEdit() ? 'Edit Production' : 'Add New Production' }}</h1>
+      <p class="muted page-head__sub">
+        {{ isEdit() ? 'Update the production details below.' : 'Create a new theatre production. Fill in the details below.' }}
+      </p>
     </div>
     <div class="head-actions">
       <a class="btn btn--ghost" routerLink="/productions">Cancel</a>
-      <button type="submit" class="btn btn--primary">Save Production</button>
+      <button type="submit" class="btn btn--primary">
+        {{ isEdit() ? 'Update Production' : 'Save Production' }}
+      </button>
     </div>
   </header>
 
@@ -58,11 +62,16 @@
 
     <section class="card">
       <h2 class="card-title">Poster Image</h2>
-      <div class="upload">
-        <mat-icon>cloud_upload</mat-icon>
-        <p>Click to upload or drag and drop</p>
-        <span class="muted">PNG, JPG. Max 5MB</span>
-      </div>
+      @if (isEdit()) {
+        <div class="poster-preview">SK</div>
+        <button type="button" class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
+      } @else {
+        <div class="upload">
+          <mat-icon>cloud_upload</mat-icon>
+          <p>Click to upload or drag and drop</p>
+          <span class="muted">PNG, JPG. Max 5MB</span>
+        </div>
+      }
 
       <label class="lbl">Status</label>
       <div class="radios">
@@ -77,6 +86,28 @@
       </div>
     </section>
   </div>
+
+  <!-- Details: age restriction, duration, intermission -->
+  <section class="card">
+    <h2 class="card-title">Show Details</h2>
+    <div class="grid-3-inner">
+      <div>
+        <label class="lbl">Age Restriction <span class="req">*</span></label>
+        <select class="input" [(ngModel)]="ageRestriction" name="ageRestriction" required>
+          <option value="" disabled selected>Select age restriction</option>
+          @for (a of ageRestrictions; track a) { <option [value]="a">{{ a }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Duration (minutes) <span class="req">*</span></label>
+        <input class="input" type="number" min="0" placeholder="Enter duration" [(ngModel)]="duration" name="duration" required />
+      </div>
+      <div>
+        <label class="lbl">Intermission (minutes)</label>
+        <input class="input" type="number" min="0" placeholder="Enter intermission" [(ngModel)]="intermission" name="intermission" />
+      </div>
+    </div>
+  </section>
 
   <!-- Schedule -->
   <section class="card">

@@ -1,0 +1,244 @@
+<!-- Breadcrumb -->
+<nav class="crumbs">
+  <a routerLink="/productions">Productions</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ production.title }}</span>
+</nav>
+
+<!-- Header -->
+<header class="view-head">
+  <div class="view-head__left">
+    <h1 class="page-title">{{ production.title }}</h1>
+    <span class="pill" [class]="statusClass(production.status)">{{ production.status }}</span>
+    <div class="view-head__meta muted">
+      <span><mat-icon>calendar_today</mat-icon>{{ production.dates }}</span>
+      <span><mat-icon>place</mat-icon>{{ production.venue }}</span>
+    </div>
+  </div>
+  <div class="head-actions">
+    <a class="btn btn--ghost" [routerLink]="['/productions', 'p1', 'edit']">
+      <mat-icon>edit</mat-icon> Edit
+    </a>
+    <button class="btn btn--danger"><mat-icon>delete</mat-icon> Delete</button>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabbar">
+  @for (t of tabs; track t.key) {
+    <button class="tabbar__tab" [class.tabbar__tab--active]="tab() === t.key" (click)="tab.set(t.key)">
+      {{ t.label }}
+    </button>
+  }
+</div>
+
+<!-- ── Overview ─────────────────────────────────────────────────────────── -->
+@if (tab() === 'overview') {
+  <div class="grid-2">
+    <section class="card poster-card">
+      <div class="poster-lg">{{ production.abbr }}</div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Production Information</h2>
+      <dl class="info">
+        <div><dt>Title</dt><dd>{{ production.title }}</dd></div>
+        <div><dt>Language</dt><dd>{{ production.language }}</dd></div>
+        <div><dt>Genre</dt><dd>{{ production.genre }}</dd></div>
+        <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(production.status)">{{ production.status }}</span></dd></div>
+        <div><dt>Created By</dt><dd>{{ production.createdBy }}</dd></div>
+        <div><dt>Created Date</dt><dd>{{ production.createdDate }}</dd></div>
+        <div><dt>Last Updated</dt><dd>{{ production.lastUpdated }}</dd></div>
+      </dl>
+
+      <h3 class="sub-title">Synopsis</h3>
+      <p class="muted">{{ production.synopsis }}</p>
+
+      <h3 class="sub-title">Additional Information</h3>
+      <dl class="info">
+        <div><dt>Age Restriction</dt><dd>{{ production.ageRestriction }}</dd></div>
+        <div><dt>Duration</dt><dd>{{ production.duration }}</dd></div>
+      </dl>
+    </section>
+  </div>
+}
+
+<!-- ── Cast & Crew ──────────────────────────────────────────────────────── -->
+@if (tab() === 'cast') {
+  <section class="card">
+    <header class="card-head">
+      <h2 class="card-title">Cast &amp; Crew</h2>
+      <button class="btn btn--primary"><mat-icon>add</mat-icon> Add Cast/Crew</button>
+    </header>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Role</th><th>Type</th><th>Notes</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (c of cast; track c.name) {
+            <tr>
+              <td class="cell-title">{{ c.name }}</td>
+              <td>{{ c.role }}</td>
+              <td><span class="pill pill--info">{{ c.type }}</span></td>
+              <td class="muted">{{ c.note }}</td>
+              <td>
+                <div class="actions">
+                  <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
+                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+<!-- ── Performances ─────────────────────────────────────────────────────── -->
+@if (tab() === 'performances') {
+  <section class="card">
+    <header class="card-head">
+      <h2 class="card-title">Performances ({{ performances.length }})</h2>
+      <button class="btn btn--primary"><mat-icon>add</mat-icon> Add Performance</button>
+    </header>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Date</th><th>Time</th><th>Show Title</th><th>Venue</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (p of performances; track p.show + p.time) {
+            <tr>
+              <td>{{ p.date }}</td>
+              <td>{{ p.time }}</td>
+              <td class="cell-title">{{ p.show }}</td>
+              <td>{{ p.venue }}</td>
+              <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
+              <td>
+                <div class="actions">
+                  <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
+                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+<!-- ── Ticket Pricing ───────────────────────────────────────────────────── -->
+@if (tab() === 'pricing') {
+  <section class="card">
+    <header class="card-head">
+      <h2 class="card-title">Ticket Pricing</h2>
+      <button class="btn btn--ghost"><mat-icon>edit</mat-icon> Edit Pricing</button>
+    </header>
+
+    <div class="base-price">
+      <span class="muted">Base Ticket Price (per production)</span>
+      <span class="base-price__val">{{ production.basePrice }}</span>
+    </div>
+
+    <div class="zones">
+      <div class="zone">
+        <h3 class="zone__title">Stalls</h3>
+        <table class="table table--sm">
+          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
+          <tbody>
+            @for (r of stalls; track r.seats) {
+              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="zone">
+        <h3 class="zone__title">Circle</h3>
+        <table class="table table--sm">
+          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
+          <tbody>
+            @for (r of circle; track r.seats) {
+              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="zone">
+        <h3 class="zone__title">Upper Circle</h3>
+        <table class="table table--sm">
+          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
+          <tbody>
+            @for (r of upperCircle; track r.seats) {
+              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Concessions</h3>
+    <table class="table table--sm concessions">
+      <tbody>
+        @for (c of concessions; track c.type) {
+          <tr><td class="cell-title">{{ c.type }}</td><td class="muted">{{ c.discount }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+<!-- ── Media & Documents ────────────────────────────────────────────────── -->
+@if (tab() === 'media') {
+  <div class="grid-2">
+    <section class="card">
+      <h2 class="card-title">Poster Image</h2>
+      <div class="poster-lg poster-lg--media">{{ production.abbr }}</div>
+      <button class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
+    </section>
+
+    <section class="card">
+      <header class="card-head">
+        <h2 class="card-title">Gallery Images</h2>
+        <button class="btn btn--ghost"><mat-icon>upload</mat-icon> Upload Image</button>
+      </header>
+      <div class="gallery">
+        <div class="gallery__item">SK</div>
+        <div class="gallery__item">SK</div>
+        <div class="gallery__item">SK</div>
+        <div class="gallery__item">SK</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <header class="card-head">
+      <h2 class="card-title">Documents</h2>
+      <button class="btn btn--primary"><mat-icon>upload</mat-icon> Upload Document</button>
+    </header>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>File Name</th><th>Type</th><th>Uploaded Date</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (d of documents; track d.name) {
+            <tr>
+              <td class="cell-title">{{ d.name }}</td>
+              <td><span class="pill pill--muted">{{ d.type }}</span></td>
+              <td>{{ d.uploaded }}</td>
+              <td>
+                <div class="actions">
+                  <button class="icon-btn" aria-label="Download"><mat-icon>download</mat-icon></button>
+                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

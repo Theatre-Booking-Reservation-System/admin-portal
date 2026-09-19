@@ -61,8 +61,8 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
-                <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
-                <button class="icon-btn" aria-label="View"><mat-icon>visibility</mat-icon></button>
+                <a class="icon-btn" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+                <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
                 <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
               </div>
             </td>

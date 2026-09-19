@@ -64,25 +64,46 @@
   background: var(--brand-surface-2);
 }
 
-/* Layout */
+/* Layout — each top-level block (section or grid) gets consistent spacing */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 .grid-2-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
-.card {
-  margin-bottom: 0; /* grid gap handles spacing */
+.grid-3-inner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
 }
-.card + .card,
-.grid-2 + .card,
-.card + .grid-2 {
-  margin-top: 0;
+
+/* Consistent vertical rhythm between the stacked blocks in the form */
+form > .grid-2,
+form > .card {
+  margin-bottom: 1rem;
+}
+
+.btn.full {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+.poster-preview {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-width: 200px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--brand-maroon), var(--brand-maroon-dark));
+  color: var(--brand-gold);
+  display: grid;
+  place-items: center;
+  font-size: 1.75rem;
+  font-weight: 800;
 }
 .card-title {
   font-size: 1rem;
@@ -211,7 +232,8 @@ select.input {
 
 @media (max-width: 900px) {
   .grid-2,
-  .grid-2-inner {
+  .grid-2-inner,
+  .grid-3-inner {
     grid-template-columns: 1fr;
   }
   .page-head {

@@ -31,6 +31,20 @@ export const routes: Routes = [
             (m) => m.ProductionFormComponent,
           ),
       },
+      {
+        path: 'productions/:id/edit',
+        loadComponent: () =>
+          import('./features/productions/production-form/production-form.component').then(
+            (m) => m.ProductionFormComponent,
+          ),
+      },
+      {
+        path: 'productions/:id',
+        loadComponent: () =>
+          import('./features/productions/production-view/production-view.component').then(
+            (m) => m.ProductionViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
