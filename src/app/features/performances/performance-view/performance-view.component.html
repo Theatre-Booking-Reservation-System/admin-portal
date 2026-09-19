@@ -1,0 +1,140 @@
+<nav class="crumbs">
+  <a routerLink="/performances">Performances</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ performance.title }} ({{ performance.dateTime }})</span>
+</nav>
+
+<header class="view-head">
+  <div class="view-head__left">
+    <h1 class="page-title">{{ performance.title }}</h1>
+    <span class="pill pill--warning">{{ performance.status }}</span>
+  </div>
+  <div class="head-actions">
+    <a class="btn btn--ghost" [routerLink]="['/performances', 'pf1', 'edit']"><mat-icon>edit</mat-icon> Edit</a>
+    <button class="btn btn--ghost"><mat-icon>content_copy</mat-icon> Duplicate</button>
+    <button class="btn btn--danger"><mat-icon>cancel</mat-icon> Cancel Performance</button>
+  </div>
+</header>
+
+<div class="grid-main">
+  <!-- Left: details + tabs -->
+  <div class="col-main">
+    <section class="card">
+      <h2 class="card-title">Performance details and seat booking information</h2>
+      <dl class="info">
+        <div><dt>Production</dt><dd>{{ performance.production }}</dd></div>
+        <div><dt>Show Title</dt><dd>{{ performance.showTitle }}</dd></div>
+        <div><dt>Date &amp; Time</dt><dd>{{ performance.dateTime }}</dd></div>
+        <div><dt>Venue</dt><dd>{{ performance.venue }}</dd></div>
+        <div><dt>Language</dt><dd>{{ performance.language }}</dd></div>
+        <div><dt>Duration</dt><dd>{{ performance.duration }}</dd></div>
+        <div><dt>Total Seats</dt><dd>{{ performance.totalSeats }}</dd></div>
+        <div><dt>Tickets Sold</dt><dd>{{ performance.ticketsSold }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <div class="tabbar">
+        @for (t of tabs; track t.key) {
+          <button class="tabbar__tab" [class.tabbar__tab--active]="tab() === t.key" (click)="tab.set(t.key)">
+            {{ t.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Booking List -->
+      @if (tab() === 'booking') {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Booking ID</th><th>Customer Name</th><th>Seats</th><th>Amount (LKR)</th><th>Status</th><th>Booked On</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              @for (b of bookings; track b.id) {
+                <tr>
+                  <td class="cell-title">{{ b.id }}</td>
+                  <td>{{ b.customer }}</td>
+                  <td>{{ b.seats }}</td>
+                  <td>{{ b.amount }}</td>
+                  <td><span class="pill" [class]="statusClass(b.status)">{{ b.status }}</span></td>
+                  <td>{{ b.bookedOn }}</td>
+                  <td><button class="icon-btn" aria-label="View"><mat-icon>visibility</mat-icon></button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- Seat Map -->
+      @if (tab() === 'seatmap') {
+        <div class="seatmap">
+          <div class="stage">STAGE</div>
+
+          @for (zone of zones; track zone.name) {
+            <div class="zone">
+              <h3 class="zone__title">{{ zone.name }}</h3>
+              <div class="zone__rows">
+                @for (row of zone.rows; track row.label) {
+                  <div class="seat-row">
+                    <span class="seat-row__label">{{ row.label }}</span>
+                    <div class="seat-row__seats">
+                      @for (seat of row.seats; track seat.id) {
+                        <span class="seat" [class]="'seat--' + seat.state" [title]="seat.id"></span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="legend">
+            <span class="legend__item"><i class="seat seat--available"></i> Available</span>
+            <span class="legend__item"><i class="seat seat--selected"></i> Selected</span>
+            <span class="legend__item"><i class="seat seat--booked"></i> Booked</span>
+            <span class="legend__item"><i class="seat seat--unavailable"></i> Unavailable</span>
+          </div>
+        </div>
+      }
+
+      <!-- Sales Report -->
+      @if (tab() === 'sales') {
+        <dl class="info">
+          <div><dt>Gross Sales</dt><dd>LKR 742,800</dd></div>
+          <div><dt>Concession Discounts</dt><dd>LKR 38,500</dd></div>
+          <div><dt>Loyalty Discounts</dt><dd>LKR 12,300</dd></div>
+          <div><dt>Net Revenue</dt><dd>LKR 692,000</dd></div>
+          <div><dt>Refunds</dt><dd>LKR 5,000</dd></div>
+        </dl>
+      }
+
+      <!-- Notes -->
+      @if (tab() === 'notes') {
+        <p class="muted">No notes added for this performance yet.</p>
+      }
+    </section>
+  </div>
+
+  <!-- Right: poster + quick actions + stats -->
+  <aside class="col-side">
+    <section class="card poster-card">
+      <div class="poster-lg">{{ performance.abbr }}</div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Quick Actions</h2>
+      <button class="btn btn--block" (click)="tab.set('seatmap')"><mat-icon>event_seat</mat-icon> View Seat Map</button>
+      <button class="btn btn--block" (click)="tab.set('booking')"><mat-icon>confirmation_number</mat-icon> Manage Bookings</button>
+      <button class="btn btn--block"><mat-icon>print</mat-icon> Print Report</button>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Statistics</h2>
+      <div class="donut" [style.--pct]="soldPct">
+        <span class="donut__label">{{ soldPct }}%</span>
+      </div>
+      <p class="donut__caption muted">{{ performance.ticketsSold }} / {{ performance.totalSeats }} Tickets Sold</p>
+    </section>
+  </aside>
+</div>

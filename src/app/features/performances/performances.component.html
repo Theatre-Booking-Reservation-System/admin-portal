@@ -1,0 +1,92 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Performances</h1>
+    <p class="muted page-head__sub">Manage show schedules, venues, and performance details.</p>
+  </div>
+  <a class="btn btn--primary" routerLink="/performances/new">
+    <mat-icon>add</mat-icon> Add Performance
+  </a>
+</header>
+
+<section class="card">
+  <div class="toolbar">
+    <div class="tabs">
+      @for (t of filters; track t.key) {
+        <button class="tab" [class.tab--active]="filter() === t.key" (click)="filter.set(t.key)">
+          {{ t.label }} ({{ t.count }})
+        </button>
+      }
+    </div>
+
+    <div class="toolbar__right">
+      <div class="select-chip"><mat-icon>filter_list</mat-icon> All Productions</div>
+      <div class="select-chip"><mat-icon>calendar_today</mat-icon> Select date range</div>
+      <div class="search">
+        <mat-icon>search</mat-icon>
+        <input
+          type="text"
+          placeholder="Search performances..."
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date &amp; Time</th>
+          <th>Production</th>
+          <th>Show Title</th>
+          <th>Venue</th>
+          <th>Language</th>
+          <th>Status</th>
+          <th>Tickets</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of filtered(); track p.id) {
+          <tr>
+            <td>
+              <div class="dt">
+                <span class="dt__date">{{ p.date }}</span>
+                <span class="dt__time muted">{{ p.time }}</span>
+              </div>
+            </td>
+            <td class="cell-title">{{ p.production }}</td>
+            <td>{{ p.showTitle }}</td>
+            <td>{{ p.venue }}</td>
+            <td>{{ p.language }}</td>
+            <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
+            <td>{{ p.ticketsSold }} / {{ p.capacity }}</td>
+            <td>
+              <div class="actions">
+                <a class="icon-btn" [routerLink]="['/performances', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" [routerLink]="['/performances', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+                <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="empty">No performances found.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="muted">Showing 1–{{ filtered().length }} of 24 performances</span>
+    <div class="pager">
+      <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+      <button class="pager__btn pager__btn--active">1</button>
+      <button class="pager__btn">2</button>
+      <button class="pager__btn">3</button>
+      <button class="pager__btn">4</button>
+      <button class="pager__btn">5</button>
+      <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+  </div>
+</section>

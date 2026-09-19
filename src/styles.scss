@@ -150,6 +150,7 @@ a {
   border-radius: 14px;
   padding: 1.25rem;
   box-shadow: var(--shadow-card);
+  min-width: 0; /* allow cards to shrink inside grids instead of overflowing */
 }
 
 /* Status pills */

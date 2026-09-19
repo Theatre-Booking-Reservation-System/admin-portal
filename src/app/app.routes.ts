@@ -45,6 +45,32 @@ export const routes: Routes = [
             (m) => m.ProductionViewComponent,
           ),
       },
+      {
+        path: 'performances',
+        loadComponent: () =>
+          import('./features/performances/performances.component').then((m) => m.PerformancesComponent),
+      },
+      {
+        path: 'performances/new',
+        loadComponent: () =>
+          import('./features/performances/performance-form/performance-form.component').then(
+            (m) => m.PerformanceFormComponent,
+          ),
+      },
+      {
+        path: 'performances/:id/edit',
+        loadComponent: () =>
+          import('./features/performances/performance-form/performance-form.component').then(
+            (m) => m.PerformanceFormComponent,
+          ),
+      },
+      {
+        path: 'performances/:id',
+        loadComponent: () =>
+          import('./features/performances/performance-view/performance-view.component').then(
+            (m) => m.PerformanceViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
