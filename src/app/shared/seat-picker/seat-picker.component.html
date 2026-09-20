@@ -1,0 +1,57 @@
+<div class="overlay" (click)="cancel()">
+  <div class="dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <header class="dialog__head">
+      <h2 class="dialog__title">Select Seats</h2>
+      <button class="dialog__close" (click)="cancel()" aria-label="Close"><mat-icon>close</mat-icon></button>
+    </header>
+
+    <div class="dialog__body">
+      <div class="stage">STAGE</div>
+
+      @for (zone of zones(); track zone.name; let zi = $index) {
+        <div class="zone">
+          <h3 class="zone__title">{{ zone.name }}</h3>
+          <div class="zone__rows">
+            @for (row of zone.rows; track row.label; let ri = $index) {
+              <div class="seat-row">
+                <span class="seat-row__label">{{ row.label }}</span>
+                <div class="seat-row__seats">
+                  @for (seat of row.seats; track seat.id; let si = $index) {
+                    <button
+                      type="button"
+                      class="seat"
+                      [class]="'seat--' + seat.state"
+                      [title]="seat.id"
+                      [disabled]="seat.state === 'booked' || seat.state === 'unavailable'"
+                      (click)="toggle(zi, ri, si)"
+                    ></button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="legend">
+        <span class="legend__item"><i class="seat seat--available"></i> Available</span>
+        <span class="legend__item"><i class="seat seat--selected"></i> Selected</span>
+        <span class="legend__item"><i class="seat seat--booked"></i> Booked</span>
+        <span class="legend__item"><i class="seat seat--unavailable"></i> Unavailable</span>
+      </div>
+    </div>
+
+    <footer class="dialog__foot">
+      <span class="dialog__count">
+        <strong>{{ selectedCount() }}</strong> seat(s) selected
+        @if (selectedCount()) { <span class="muted">— {{ selectedIds().join(', ') }}</span> }
+      </span>
+      <div class="dialog__actions">
+        <button class="btn btn--ghost" (click)="cancel()">Cancel</button>
+        <button class="btn btn--primary" (click)="confirm()" [disabled]="!selectedCount()">
+          Confirm Seats
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Bookings</h1>
+    <p class="muted page-head__sub">Manage customer bookings, view details and update booking status.</p>
+  </div>
+  <a class="btn btn--primary" routerLink="/bookings/new">
+    <mat-icon>add</mat-icon> New Booking
+  </a>
+</header>
+
+<section class="card">
+  <div class="toolbar">
+    <div class="tabs">
+      @for (t of filters; track t.key) {
+        <button class="tab" [class.tab--active]="filter() === t.key" (click)="filter.set(t.key)">
+          {{ t.label }} ({{ t.count }})
+        </button>
+      }
+    </div>
+    <div class="search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search bookings..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Filter row -->
+  <div class="filters">
+    <div class="filter">
+      <label>Date Range</label>
+      <div class="select-chip"><mat-icon>calendar_today</mat-icon> All Dates</div>
+    </div>
+    <div class="filter">
+      <label>Production</label>
+      <div class="select-chip"><mat-icon>theaters</mat-icon> All Productions</div>
+    </div>
+    <div class="filter">
+      <label>Booking Status</label>
+      <div class="select-chip"><mat-icon>filter_list</mat-icon> All Statuses</div>
+    </div>
+    <button class="btn btn--ghost reset"><mat-icon>refresh</mat-icon> Reset Filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Customer</th>
+          <th>Production</th>
+          <th>Performance Date</th>
+          <th>Seats</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Payment Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (b of filtered(); track b.id) {
+          <tr>
+            <td class="cell-title">{{ b.id }}</td>
+            <td>{{ b.customer }}</td>
+            <td>{{ b.production }}</td>
+            <td>
+              <div class="dt">
+                <span>{{ b.performanceDate }}</span>
+                <span class="dt__time muted">{{ b.performanceTime }}</span>
+              </div>
+            </td>
+            <td>{{ b.seats }}</td>
+            <td>{{ b.amount }}</td>
+            <td><span class="pill" [class]="statusClass(b.status)">{{ b.status }}</span></td>
+            <td><span class="pill" [class]="statusClass(b.payment)">{{ b.payment }}</span></td>
+            <td>
+              <div class="actions">
+                <a class="icon-btn" [routerLink]="['/bookings', b.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" [routerLink]="['/bookings', b.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="empty">No bookings found.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="muted">Showing 1–{{ filtered().length }} of 137 bookings</span>
+    <div class="pager">
+      <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+      <button class="pager__btn pager__btn--active">1</button>
+      <button class="pager__btn">2</button>
+      <button class="pager__btn">3</button>
+      <button class="pager__btn">4</button>
+      <button class="pager__btn">5</button>
+      <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+  </div>
+</section>

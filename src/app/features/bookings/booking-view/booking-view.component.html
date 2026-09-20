@@ -1,0 +1,115 @@
+<nav class="crumbs">
+  <a routerLink="/bookings">Bookings</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ booking.id }}</span>
+</nav>
+
+<header class="view-head">
+  <div class="view-head__left">
+    <h1 class="page-title">Booking Details</h1>
+    <span class="pill" [class]="statusClass(booking.status)">{{ booking.status }}</span>
+    <span class="view-head__sub muted">{{ booking.id }} · {{ booking.createdAt }}</span>
+  </div>
+  <div class="head-actions">
+    <button class="btn btn--ghost" (click)="print()"><mat-icon>print</mat-icon> Print Ticket</button>
+    <a class="btn btn--ghost" [routerLink]="['/bookings', booking.id, 'edit']"><mat-icon>edit</mat-icon> Edit Booking</a>
+    <button class="btn btn--danger"><mat-icon>cancel</mat-icon> Cancel Booking</button>
+  </div>
+</header>
+
+<div class="grid-top">
+  <!-- Customer Information -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>person</mat-icon> Customer Information</h2>
+    <dl class="info">
+      <div><dt>Name</dt><dd>{{ booking.customerName }}</dd></div>
+      <div><dt>Email</dt><dd>{{ booking.email }}</dd></div>
+      <div><dt>Phone</dt><dd>{{ booking.phone }}</dd></div>
+      <div><dt>Customer Type</dt><dd>{{ booking.customerType }}</dd></div>
+      <div><dt>Member Since</dt><dd>{{ booking.memberSince }}</dd></div>
+    </dl>
+  </section>
+
+  <!-- Booking Information -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>confirmation_number</mat-icon> Booking Information</h2>
+    <dl class="info">
+      <div><dt>Production</dt><dd>{{ booking.production }}</dd></div>
+      <div><dt>Performance</dt><dd>{{ booking.performance }}</dd></div>
+      <div><dt>Venue</dt><dd>{{ booking.venue }}</dd></div>
+      <div><dt>Seats</dt><dd>{{ booking.seats }}</dd></div>
+      <div><dt>Number of Seats</dt><dd>{{ booking.numberOfSeats }}</dd></div>
+      <div><dt>Amount</dt><dd>{{ booking.amount }}</dd></div>
+      <div><dt>Booking Date</dt><dd>{{ booking.bookingDate }}</dd></div>
+      <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(booking.status)">{{ booking.status }}</span></dd></div>
+      <div><dt>Payment Status</dt><dd><span class="pill" [class]="statusClass(booking.paymentStatus)">{{ booking.paymentStatus }}</span></dd></div>
+      <div><dt>Payment Method</dt><dd>{{ booking.paymentMethod }}</dd></div>
+      <div><dt>Transaction ID</dt><dd>{{ booking.transactionId }}</dd></div>
+    </dl>
+  </section>
+
+  <!-- Poster -->
+  <section class="card poster-card">
+    <div class="poster-lg">{{ booking.abbr }}</div>
+    <a class="btn btn--ghost full" routerLink="/productions/p1"><mat-icon>theaters</mat-icon> View Production</a>
+    <a class="btn btn--ghost full" routerLink="/performances/pf1"><mat-icon>event</mat-icon> View Performance</a>
+  </section>
+</div>
+
+<div class="grid-bottom">
+  <!-- Price Breakdown -->
+  <section class="card">
+    <h2 class="card-title">Price Breakdown</h2>
+    <ul class="breakdown">
+      @for (row of priceBreakdown; track row.label) {
+        <li class="breakdown__row">
+          <span>
+            {{ row.label }}
+            @if (row.detail) { <span class="muted">({{ row.detail }})</span> }
+          </span>
+          <span>{{ row.amount }}</span>
+        </li>
+      }
+      <li class="breakdown__row breakdown__row--total">
+        <span>Total Amount</span>
+        <span>{{ totalAmount }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Payment Timeline -->
+  <section class="card">
+    <h2 class="card-title">Payment Timeline</h2>
+    <ul class="timeline">
+      @for (step of timeline; track step.label) {
+        <li class="timeline__step">
+          <span class="timeline__dot" [class.timeline__dot--done]="step.done">
+            <mat-icon>{{ step.done ? 'check' : 'radio_button_unchecked' }}</mat-icon>
+          </span>
+          <div class="timeline__meta">
+            <span class="timeline__label">{{ step.label }}</span>
+            <span class="timeline__time muted">{{ step.time }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+</div>
+
+<!-- Printable ticket (only visible when printing) -->
+<div class="ticket" aria-hidden="true">
+  <div class="ticket__head">
+    <span class="ticket__brand">SAPUMAL THEATRE</span>
+    <span class="ticket__ref">{{ booking.id }}</span>
+  </div>
+  <h2 class="ticket__title">{{ booking.production }}</h2>
+  <div class="ticket__grid">
+    <div><span>Performance</span><strong>{{ booking.performance }}</strong></div>
+    <div><span>Venue</span><strong>{{ booking.venue }}</strong></div>
+    <div><span>Seats</span><strong>{{ booking.seats }}</strong></div>
+    <div><span>Customer</span><strong>{{ booking.customerName }}</strong></div>
+    <div><span>Amount</span><strong>{{ booking.amount }}</strong></div>
+    <div><span>Status</span><strong>{{ booking.status }}</strong></div>
+  </div>
+  <p class="ticket__foot">Please present this ticket at the box office. Art brings us together.</p>
+</div>

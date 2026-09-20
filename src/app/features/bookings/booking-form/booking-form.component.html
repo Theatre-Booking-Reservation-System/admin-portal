@@ -1,0 +1,143 @@
+<form (submit)="save($event)">
+  <nav class="crumbs">
+    <a routerLink="/bookings">Bookings</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? 'Edit Booking' : 'Add New Booking' }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">{{ isEdit() ? 'Edit Booking' : 'Add New Booking' }}</h1>
+      <p class="muted page-head__sub">
+        {{ isEdit() ? 'Update the booking details below.' : 'Create a new booking for a customer.' }}
+      </p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn--ghost" routerLink="/bookings">Cancel</a>
+      <button type="submit" class="btn btn--primary">{{ isEdit() ? 'Update Booking' : 'Create Booking' }}</button>
+    </div>
+  </header>
+
+  <div class="grid-3">
+    <!-- Customer + Performance -->
+    <div class="col">
+      <section class="card">
+        <h2 class="card-title">Customer Information</h2>
+
+        <label class="lbl">Full Name <span class="req">*</span></label>
+        <input class="input" type="text" placeholder="Enter customer name" [(ngModel)]="customerName" name="customerName" required />
+
+        <label class="lbl">Email</label>
+        <input class="input" type="email" placeholder="Enter email address" [(ngModel)]="email" name="email" />
+
+        <label class="lbl">Phone</label>
+        <input class="input" type="tel" placeholder="Enter phone number" [(ngModel)]="phone" name="phone" />
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Concession</h2>
+
+        <label class="lbl">Concession Type</label>
+        <select class="input" [(ngModel)]="concession" name="concession" (ngModelChange)="onConcessionChange()">
+          @for (c of concessionOptions; track c.value) {
+            <option [value]="c.value">{{ c.label }}@if (c.discountPct) { ({{ c.discountPct }}% off) }</option>
+          }
+        </select>
+
+        @if (requiresVerification) {
+          <label class="lbl">NIC / Passport Number <span class="req">*</span></label>
+          <input
+            class="input"
+            type="text"
+            placeholder="Enter NIC or passport number"
+            [(ngModel)]="idDocument"
+            name="idDocument"
+            required
+          />
+          <p class="verify-note">
+            <mat-icon>info</mat-icon>
+            This booking will be flagged for ID verification at the box office on the day.
+          </p>
+        }
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <h2 class="card-title">Performance Details</h2>
+
+        <label class="lbl">Production <span class="req">*</span></label>
+        <select class="input" [(ngModel)]="production" name="production" required>
+          <option value="" disabled selected>Select production</option>
+          @for (p of productions; track p) { <option [value]="p">{{ p }}</option> }
+        </select>
+
+        <label class="lbl">Performance <span class="req">*</span></label>
+        <select class="input" [(ngModel)]="performance" name="performance" required>
+          <option value="" disabled selected>Select performance</option>
+          @for (p of performances; track p) { <option [value]="p">{{ p }}</option> }
+        </select>
+
+        <label class="lbl">Date &amp; Time</label>
+        <input class="input" type="text" value="Auto-filled from performance" readonly />
+
+        <label class="lbl">Venue</label>
+        <input class="input" type="text" value="Main Theatre" readonly />
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Seat Selection <span class="req">*</span></h2>
+        <button type="button" class="btn btn--primary full" (click)="openPicker()"><mat-icon>event_seat</mat-icon>
+          {{ seatsSelected() ? 'Edit Seats' : 'Select Seats' }}
+        </button>
+        <p class="seat-note muted">{{ selectedSeats() }}</p>
+      </section>
+    </div>
+
+    <!-- Summary + payment -->
+    <div class="col">
+      <section class="card">
+        <h2 class="card-title">Booking Summary</h2>
+        <ul class="summary">
+          <li><span>Seats Selected</span><span>{{ seatsSelected() }}</span></li>
+          <li><span>Ticket Price</span><span>{{ ticketPrice() }}</span></li>
+          @if (requiresVerification) {
+            <li class="summary__discount"><span>Concession ({{ concessionLabel() }})</span><span>− {{ concessionAmount() }}</span></li>
+          }
+          <li><span>Booking Fee</span><span>{{ bookingFee() }}</span></li>
+          <li class="summary__total"><span>Total Amount</span><span>{{ total() }}</span></li>
+        </ul>
+        @if (requiresVerification) {
+          <p class="pill pill--warning summary__flag">
+            <mat-icon>flag</mat-icon> Flagged for box-office verification
+          </p>
+        }
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Payment Information</h2>
+        <label class="lbl">Payment Method <span class="req">*</span></label>
+        <select class="input" [(ngModel)]="paymentMethod" name="paymentMethod" required>
+          <option value="" disabled selected>Select payment method</option>
+          @for (m of paymentMethods; track m) { <option [value]="m">{{ m }}</option> }
+        </select>
+
+        <label class="checkbox">
+          <input type="checkbox" [(ngModel)]="markAsPaid" name="markAsPaid" />
+          <span>Mark as paid</span>
+        </label>
+
+        <label class="lbl">Notes (Optional)</label>
+        <textarea class="input" rows="3" placeholder="Add any additional notes about this booking..." [(ngModel)]="notes" name="notes"></textarea>
+      </section>
+    </div>
+  </div>
+</form>
+
+@if (pickerOpen()) {
+  <app-seat-picker
+    [preselected]="seats()"
+    (confirmed)="onSeatsConfirmed($event)"
+    (cancelled)="onPickerCancelled()"
+  />
+}

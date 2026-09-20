@@ -33,7 +33,6 @@ export class SidebarComponent {
     { label: 'Concessions', icon: 'sell', route: '/concessions' },
     { label: 'Payments', icon: 'payments', route: '/payments' },
     { label: 'Reports', icon: 'bar_chart', route: '/reports' },
-    { label: 'Users', icon: 'admin_panel_settings', route: '/users' },
     { label: 'Settings', icon: 'settings', route: '/settings' },
   ];
 }
