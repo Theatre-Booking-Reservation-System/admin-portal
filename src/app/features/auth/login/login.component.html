@@ -45,16 +45,26 @@
       </button>
     </label>
 
+    <!--
+      
+      "commented out until the reset flow is implemented.
     <div class="login__row">
-      <label class="checkbox">
-        <input type="checkbox" name="remember" [(ngModel)]="remember" />
-        <span>Remember me</span>
-      </label>
       <a class="login__forgot" href="#">Forgot password?</a>
     </div>
+    -->
 
-    <button type="submit" class="login__submit">
-      Sign In <mat-icon>arrow_forward</mat-icon>
+    @if (error()) {
+      <p class="login__error" role="alert">
+        <mat-icon>error_outline</mat-icon> {{ error() }}
+      </p>
+    }
+
+    <button type="submit" class="login__submit" [disabled]="loading()">
+      @if (loading()) {
+        Signing in…
+      } @else {
+        Sign In <mat-icon>arrow_forward</mat-icon>
+      }
     </button>
 
     <div class="login__secure">

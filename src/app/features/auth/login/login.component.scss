@@ -186,6 +186,29 @@
   background: var(--brand-maroon-dark);
   transform: translateY(-1px);
 }
+.login__submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+.login__error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: #fbeae8;
+  color: #b42318;
+  font-size: 0.82rem;
+}
+.login__error mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
 .login__submit mat-icon {
   font-size: 18px;
   width: 18px;

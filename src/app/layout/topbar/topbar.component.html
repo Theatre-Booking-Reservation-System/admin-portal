@@ -27,16 +27,16 @@
 
   <!-- User -->
   <button mat-button class="topbar__user" [matMenuTriggerFor]="userMenu">
-    <span class="avatar">AU</span>
+    <span class="avatar">{{ initials() }}</span>
     <span class="topbar__user-meta">
-      <span class="topbar__user-name">Admin User</span>
-      <span class="topbar__user-role">Administrator</span>
+      <span class="topbar__user-name">{{ user()?.name ?? 'Admin User' }}</span>
+      <span class="topbar__user-role">{{ user()?.role ?? 'Administrator' }}</span>
     </span>
     <mat-icon>arrow_drop_down</mat-icon>
   </button>
   <mat-menu #userMenu="matMenu">
     <button mat-menu-item><mat-icon>person</mat-icon><span>Profile</span></button>
     <button mat-menu-item><mat-icon>settings</mat-icon><span>Settings</span></button>
-    <button mat-menu-item><mat-icon>logout</mat-icon><span>Sign out</span></button>
+    <button mat-menu-item (click)="logout()"><mat-icon>logout</mat-icon><span>Sign out</span></button>
   </mat-menu>
 </header>
