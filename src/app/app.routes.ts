@@ -74,6 +74,18 @@ export const routes: Routes = [
             (m) => m.PerformanceViewComponent,
           ),
       },
+      {
+        path: 'customers',
+        loadComponent: () =>
+          import('./features/customers/customers.component').then((m) => m.CustomersComponent),
+      },
+      {
+        path: 'customers/:id',
+        loadComponent: () =>
+          import('./features/customers/customer-view/customer-view.component').then(
+            (m) => m.CustomerViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

@@ -1,0 +1,89 @@
+<nav class="crumbs">
+  <a routerLink="/customers">Customers</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ customer.name }}</span>
+</nav>
+
+<header class="view-head">
+  <div class="view-head__left">
+    <span class="avatar-lg">{{ customer.abbr }}</span>
+    <div>
+      <h1 class="page-title">{{ customer.name }}</h1>
+      <p class="muted view-head__sub">Member since {{ customer.memberSince }}</p>
+    </div>
+    <span class="pill" [class]="customer.status === 'Active' ? 'pill--success' : 'pill--muted'">{{ customer.status }}</span>
+    @if (customer.loyaltyMember) {
+      <span class="pill pill--warning"><mat-icon class="pill-icon">loyalty</mat-icon> Loyalty Member</span>
+    }
+  </div>
+</header>
+
+<!-- Stat cards -->
+<section class="stats">
+  <article class="card stat">
+    <div class="stat__icon"><mat-icon>confirmation_number</mat-icon></div>
+    <div><span class="stat__label">Total Bookings</span><span class="stat__value">{{ customer.totalBookings }}</span></div>
+  </article>
+  <article class="card stat">
+    <div class="stat__icon"><mat-icon>event_upcoming</mat-icon></div>
+    <div><span class="stat__label">Upcoming</span><span class="stat__value">{{ customer.upcomingBookings }}</span></div>
+  </article>
+  <article class="card stat">
+    <div class="stat__icon"><mat-icon>payments</mat-icon></div>
+    <div><span class="stat__label">Total Spend</span><span class="stat__value">{{ customer.totalSpend }}</span></div>
+  </article>
+</section>
+
+<div class="grid-2">
+  <!-- Profile -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>person</mat-icon> Contact Information</h2>
+    <dl class="info">
+      <div><dt>Name</dt><dd>{{ customer.name }}</dd></div>
+      <div><dt>Email</dt><dd>{{ customer.email }}</dd></div>
+      <div><dt>Phone</dt><dd>{{ customer.phone }}</dd></div>
+      <div><dt>Member Since</dt><dd>{{ customer.memberSince }}</dd></div>
+      <div><dt>Status</dt><dd><span class="pill" [class]="customer.status === 'Active' ? 'pill--success' : 'pill--muted'">{{ customer.status }}</span></dd></div>
+    </dl>
+  </section>
+
+  <!-- Loyalty -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>loyalty</mat-icon> Loyalty</h2>
+    @if (customer.loyaltyMember) {
+      <dl class="info">
+        <div><dt>Member</dt><dd>Yes</dd></div>
+        <div><dt>Card Number</dt><dd>{{ customer.loyaltyCardNo }}</dd></div>
+        <div><dt>Per-ticket Discount</dt><dd>10%</dd></div>
+        <div><dt>Early Booking</dt><dd>1 week before release</dd></div>
+      </dl>
+    } @else {
+      <p class="muted">This customer is not a loyalty member.</p>
+    }
+  </section>
+</div>
+
+<!-- Booking history -->
+<section class="card">
+  <h2 class="card-title">Booking History</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Booking ID</th><th>Production</th><th>Date &amp; Time</th><th>Seats</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        @for (b of bookings; track b.id) {
+          <tr>
+            <td class="cell-title">{{ b.id }}</td>
+            <td>{{ b.production }}</td>
+            <td>{{ b.date }}</td>
+            <td>{{ b.seats }}</td>
+            <td>{{ b.amount }}</td>
+            <td><span class="pill" [class]="statusClass(b.status)">{{ b.status }}</span></td>
+            <td><a class="icon-btn" [routerLink]="['/bookings', b.id]" aria-label="View booking"><mat-icon>visibility</mat-icon></a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
