@@ -1,0 +1,94 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Customers</h1>
+    <p class="muted page-head__sub">View and search patron accounts and their booking history.</p>
+  </div>
+</header>
+
+<section class="card">
+  <div class="toolbar">
+    <div class="tabs">
+      @for (t of filters; track t.key) {
+        <button class="tab" [class.tab--active]="filter() === t.key" (click)="filter.set(t.key)">
+          {{ t.label }} ({{ t.count }})
+        </button>
+      }
+    </div>
+    <div class="search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search by name, email or phone..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Type</th>
+          <th>Bookings</th>
+          <th>Total Spend</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of filtered(); track c.id) {
+          <tr>
+            <td>
+              <div class="cust">
+                <span class="cust__avatar">{{ c.abbr }}</span>
+                <span class="cust__name">{{ c.name }}</span>
+              </div>
+            </td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.phone }}</td>
+            <td>
+              <span class="pill" [class]="c.type === 'Loyalty' ? 'pill--warning' : 'pill--muted'">
+                @if (c.type === 'Loyalty') { <mat-icon class="pill-icon">loyalty</mat-icon> }
+                {{ c.type }}
+              </span>
+            </td>
+            <td>{{ c.totalBookings }}</td>
+            <td>{{ money(c.totalSpend) }}</td>
+            <td>{{ c.joined }}</td>
+            <td>
+              @if (c.locked) {
+                <span class="pill pill--danger"><mat-icon class="pill-icon">lock</mat-icon> Locked</span>
+              } @else {
+                <span class="pill" [class]="c.status === 'Active' ? 'pill--success' : 'pill--muted'">{{ c.status }}</span>
+              }
+            </td>
+            <td>
+              <div class="actions">
+                <a class="icon-btn" [routerLink]="['/customers', c.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                @if (c.locked) {
+                  <button class="icon-btn icon-btn--unlock" aria-label="Unlock account" (click)="unlock(c)"><mat-icon>lock_open</mat-icon></button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="empty">No customers found.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ customers.length }} customers</span>
+    <div class="pager">
+      <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+      <button class="pager__btn pager__btn--active">1</button>
+      <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+  </div>
+</section>
