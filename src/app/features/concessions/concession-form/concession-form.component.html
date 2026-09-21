@@ -1,0 +1,73 @@
+<form (submit)="save($event)">
+  <nav class="crumbs">
+    <a routerLink="/concessions">Concessions</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? 'Edit Concession' : 'Add New Concession' }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">{{ isEdit() ? 'Edit Concession' : 'Add New Concession' }}</h1>
+      <p class="muted page-head__sub">
+        {{ isEdit() ? 'Update the concession details below.' : 'Create a new concession type. Fill in the details below.' }}
+      </p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn--ghost" routerLink="/concessions">Cancel</a>
+      <button type="submit" class="btn btn--primary">{{ isEdit() ? 'Update Concession' : 'Create Concession' }}</button>
+    </div>
+  </header>
+
+  <div class="grid-2">
+    <section class="card">
+      <h2 class="card-title">Concession Details</h2>
+
+      <label class="lbl">Concession Name <span class="req">*</span></label>
+      <input class="input" type="text" placeholder="Enter concession name" [(ngModel)]="name" name="name" required />
+
+      <div class="grid-2-inner">
+        <div>
+          <label class="lbl">Discount Type <span class="req">*</span></label>
+          <select class="input" [(ngModel)]="discountType" name="discountType" required>
+            @for (d of discountTypes; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Discount Value <span class="req">*</span></label>
+          <div class="input input--suffix">
+            <input type="number" min="0" placeholder="Enter value" [(ngModel)]="discountValue" name="discountValue" required />
+            <span>{{ discountType === 'Percentage' ? '%' : 'LKR' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <label class="lbl">Eligibility Criteria <span class="req">*</span></label>
+      <input class="input" type="text" placeholder="e.g. Age 16 and below" [(ngModel)]="eligibility" name="eligibility" required />
+
+      <label class="lbl">Required Proof</label>
+      <input class="input" type="text" placeholder="e.g. Valid ID" [(ngModel)]="requiredProof" name="requiredProof" />
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Settings</h2>
+
+      <label class="lbl">Applicable to</label>
+      <div class="radios">
+        <label class="radio"><input type="radio" name="applicableTo" value="All" [(ngModel)]="applicableTo" /><span>All Productions</span></label>
+        <label class="radio"><input type="radio" name="applicableTo" value="Selected" [(ngModel)]="applicableTo" /><span>Selected Productions</span></label>
+      </div>
+
+      <label class="lbl">Description</label>
+      <textarea class="input" rows="3" placeholder="Enter concession description" [(ngModel)]="description" name="description"></textarea>
+
+      <label class="lbl">Terms &amp; Conditions</label>
+      <textarea class="input" rows="4" placeholder="Enter terms and conditions" [(ngModel)]="terms" name="terms"></textarea>
+
+      <label class="lbl">Status <span class="req">*</span></label>
+      <select class="input" [(ngModel)]="status" name="status" required>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+    </section>
+  </div>
+</form>

@@ -112,6 +112,32 @@ export const routes: Routes = [
             (m) => m.CustomerViewComponent,
           ),
       },
+      {
+        path: 'concessions',
+        loadComponent: () =>
+          import('./features/concessions/concessions.component').then((m) => m.ConcessionsComponent),
+      },
+      {
+        path: 'concessions/new',
+        loadComponent: () =>
+          import('./features/concessions/concession-form/concession-form.component').then(
+            (m) => m.ConcessionFormComponent,
+          ),
+      },
+      {
+        path: 'concessions/:id/edit',
+        loadComponent: () =>
+          import('./features/concessions/concession-form/concession-form.component').then(
+            (m) => m.ConcessionFormComponent,
+          ),
+      },
+      {
+        path: 'concessions/:id',
+        loadComponent: () =>
+          import('./features/concessions/concession-view/concession-view.component').then(
+            (m) => m.ConcessionViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

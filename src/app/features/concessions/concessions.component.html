@@ -1,0 +1,111 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Concessions</h1>
+    <p class="muted page-head__sub">Manage concession types and verify concessionary bookings.</p>
+  </div>
+  @if (tab() === 'types') {
+    <a class="btn btn--primary" routerLink="/concessions/new"><mat-icon>add</mat-icon> Add Concession</a>
+  }
+</header>
+
+<!-- Tabs -->
+<div class="tabbar">
+  <button class="tabbar__tab" [class.tabbar__tab--active]="tab() === 'types'" (click)="tab.set('types')">
+    Concession Types
+  </button>
+  <button class="tabbar__tab" [class.tabbar__tab--active]="tab() === 'verifications'" (click)="tab.set('verifications')">
+    Verifications
+  </button>
+</div>
+
+<!-- ── Concession Types ─────────────────────────────────────────────────── -->
+@if (tab() === 'types') {
+  <section class="card">
+    <div class="toolbar">
+      <span class="muted">Discount rules applied to bookings. The best single concession is applied (non-compound).</span>
+      <div class="search">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="Search concessions..." [value]="typeSearch()" (input)="typeSearch.set($any($event.target).value)" />
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>ID</th><th>Concession Name</th><th>Eligibility Criteria</th><th>Discount</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (t of filteredTypes(); track t.id) {
+            <tr>
+              <td class="cell-title">{{ t.id }}</td>
+              <td>{{ t.name }}</td>
+              <td class="muted">{{ t.eligibility }}</td>
+              <td>{{ t.discountValue }}</td>
+              <td><span class="pill" [class]="statusClass(t.status)">{{ t.status }}</span></td>
+              <td>
+                <div class="actions">
+                  <a class="icon-btn" [routerLink]="['/concessions', t.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                  <a class="icon-btn" [routerLink]="['/concessions', t.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+                  <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="deleteType(t.id)"><mat-icon>delete</mat-icon></button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">No concessions found.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+<!-- ── Verifications ────────────────────────────────────────────────────── -->
+@if (tab() === 'verifications') {
+  <section class="card">
+    <div class="toolbar">
+      <div class="tabs">
+        @for (f of verifyFilters(); track f.key) {
+          <button class="tab" [class.tab--active]="verifyFilter() === f.key" (click)="verifyFilter.set(f.key)">
+            {{ f.label }} ({{ f.count }})
+          </button>
+        }
+      </div>
+      <div class="search">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="Search by booking ID or customer..." [value]="verifySearch()" (input)="verifySearch.set($any($event.target).value)" />
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Booking ID</th><th>Customer</th><th>Concession Type</th><th>Document</th><th>Performance</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (c of filteredClaims(); track c.id) {
+            <tr>
+              <td class="cell-title">{{ c.bookingId }}</td>
+              <td>{{ c.customer }}</td>
+              <td><span class="pill pill--info">{{ c.concessionType }}</span></td>
+              <td class="doc">{{ c.document }}</td>
+              <td class="muted">{{ c.performance }}</td>
+              <td><span class="pill" [class]="statusClass(c.status)">{{ c.status }}</span></td>
+              <td>
+                @if (c.status === 'Pending') {
+                  <div class="actions">
+                    <button class="btn btn--verify" (click)="verify(c)"><mat-icon>check</mat-icon> Verify</button>
+                    <button class="btn btn--reject" (click)="reject(c)"><mat-icon>close</mat-icon> Reject</button>
+                  </div>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="empty">No concession claims found.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

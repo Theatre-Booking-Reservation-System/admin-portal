@@ -1,0 +1,60 @@
+<nav class="crumbs">
+  <a routerLink="/concessions">Concessions</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ concession.id }}</span>
+</nav>
+
+<header class="view-head">
+  <div class="view-head__left">
+    <h1 class="page-title">{{ concession.name }}</h1>
+    <span class="pill" [class]="statusClass(concession.status)">{{ concession.status }}</span>
+  </div>
+  <div class="head-actions">
+    <a class="btn btn--ghost" [routerLink]="['/concessions', concession.id, 'edit']"><mat-icon>edit</mat-icon> Edit Concession</a>
+    <button class="btn btn--danger"><mat-icon>delete</mat-icon> Delete Concession</button>
+  </div>
+</header>
+
+<div class="grid-2">
+  <!-- Details -->
+  <section class="card">
+    <h2 class="card-title">Concession Details</h2>
+    <dl class="info">
+      <div><dt>Concession ID</dt><dd>{{ concession.id }}</dd></div>
+      <div><dt>Concession Name</dt><dd>{{ concession.name }}</dd></div>
+      <div><dt>Discount Type</dt><dd>{{ concession.discountType }}</dd></div>
+      <div><dt>Discount Value</dt><dd>{{ concession.discountValue }}</dd></div>
+      <div><dt>Eligibility Criteria</dt><dd>{{ concession.eligibility }}</dd></div>
+      <div><dt>Required Proof</dt><dd>{{ concession.requiredProof }}</dd></div>
+      <div><dt>Description</dt><dd>{{ concession.description }}</dd></div>
+      <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(concession.status)">{{ concession.status }}</span></dd></div>
+      <div><dt>Created By</dt><dd>{{ concession.createdBy }}</dd></div>
+      <div><dt>Created Date</dt><dd>{{ concession.createdDate }}</dd></div>
+      <div><dt>Last Updated</dt><dd>{{ concession.lastUpdated }}</dd></div>
+    </dl>
+  </section>
+
+  <!-- Right column -->
+  <div class="col-side">
+    <section class="card">
+      <h2 class="card-title">Applicable to</h2>
+      <label class="radio"><input type="radio" checked disabled /><span>{{ concession.applicableTo }}</span></label>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Terms &amp; Conditions</h2>
+      <ol class="terms">
+        @for (t of terms; track t) { <li>{{ t }}</li> }
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Usage Statistics</h2>
+      <dl class="stats">
+        <div><dt>Total Bookings</dt><dd>{{ stats.totalBookings }}</dd></div>
+        <div><dt>Total Tickets</dt><dd>{{ stats.totalTickets }}</dd></div>
+        <div><dt>Total Discount Given</dt><dd class="stats__hl">{{ stats.totalDiscount }}</dd></div>
+      </dl>
+    </section>
+  </div>
+</div>
