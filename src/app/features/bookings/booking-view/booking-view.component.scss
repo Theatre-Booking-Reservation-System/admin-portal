@@ -1,0 +1,299 @@
+:host {
+  display: block;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--brand-muted);
+  margin-bottom: 0.75rem;
+}
+.crumbs a {
+  color: var(--brand-maroon);
+  font-weight: 600;
+}
+.crumbs mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.view-head__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.view-head__sub {
+  font-size: 0.82rem;
+}
+.head-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn.full {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.6rem;
+}
+.btn--ghost {
+  background: transparent;
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+.btn--ghost:hover {
+  background: var(--brand-surface-2);
+}
+.btn--danger {
+  background: transparent;
+  border-color: var(--brand-danger);
+  color: var(--brand-danger);
+}
+.btn--danger:hover {
+  background: var(--brand-danger-bg);
+}
+.btn mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+/* Layout */
+.grid-top {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 260px;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: start;
+}
+.grid-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+.card-title mat-icon {
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
+  color: var(--brand-maroon);
+}
+
+.info {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.info > div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.info dt {
+  color: var(--brand-muted);
+}
+.info dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.poster-card {
+  display: flex;
+  flex-direction: column;
+}
+.poster-lg {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--brand-maroon), var(--brand-maroon-dark));
+  color: var(--brand-gold);
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+/* Price breakdown */
+.breakdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.breakdown__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--brand-border);
+}
+.breakdown__row--total {
+  border-bottom: none;
+  border-top: 2px solid var(--brand-border);
+  margin-top: 0.25rem;
+  padding-top: 0.85rem;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--brand-maroon);
+}
+
+/* Timeline */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.timeline__step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+}
+.timeline__dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--brand-surface-2);
+  color: var(--brand-muted);
+  flex: none;
+}
+.timeline__dot--done {
+  background: var(--brand-success-bg);
+  color: var(--brand-success);
+}
+.timeline__dot mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+.timeline__meta {
+  display: flex;
+  flex-direction: column;
+}
+.timeline__label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.timeline__time {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 1000px) {
+  .grid-top {
+    grid-template-columns: 1fr;
+  }
+  .grid-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Printable ticket ────────────────────────────────────────────────────── */
+.ticket {
+  display: none;
+}
+
+@media print {
+  /* Hide the app chrome; only the ticket prints. */
+  :host ::ng-deep {
+    display: block;
+  }
+  .crumbs,
+  .view-head,
+  .grid-top,
+  .grid-bottom {
+    display: none !important;
+  }
+  .ticket {
+    display: block;
+    border: 2px solid #5a0f18;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    max-width: 520px;
+    margin: 0 auto;
+    color: #222;
+  }
+  .ticket__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #999;
+    padding-bottom: 0.75rem;
+  }
+  .ticket__brand {
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #5a0f18;
+  }
+  .ticket__ref {
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+  .ticket__title {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+  }
+  .ticket__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1.5rem;
+  }
+  .ticket__grid > div {
+    display: flex;
+    flex-direction: column;
+  }
+  .ticket__grid span {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+  }
+  .ticket__grid strong {
+    font-size: 0.95rem;
+  }
+  .ticket__foot {
+    margin-top: 1.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #999;
+    font-size: 0.8rem;
+    color: #666;
+    text-align: center;
+  }
+}

@@ -74,6 +74,32 @@ export const routes: Routes = [
             (m) => m.PerformanceViewComponent,
           ),
       },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/bookings/bookings.component').then((m) => m.BookingsComponent),
+      },
+      {
+        path: 'bookings/new',
+        loadComponent: () =>
+          import('./features/bookings/booking-form/booking-form.component').then(
+            (m) => m.BookingFormComponent,
+          ),
+      },
+      {
+        path: 'bookings/:id/edit',
+        loadComponent: () =>
+          import('./features/bookings/booking-form/booking-form.component').then(
+            (m) => m.BookingFormComponent,
+          ),
+      },
+      {
+        path: 'bookings/:id',
+        loadComponent: () =>
+          import('./features/bookings/booking-view/booking-view.component').then(
+            (m) => m.BookingViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

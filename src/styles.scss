@@ -179,3 +179,21 @@ a {
   background: var(--brand-surface-2);
   color: var(--brand-maroon-2);
 }
+
+/* ── Print: hide app chrome so only page content (e.g. a ticket) prints ───── */
+@media print {
+  app-sidebar,
+  app-topbar,
+  app-footer {
+    display: none !important;
+  }
+  .content {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .shell,
+  .main {
+    display: block !important;
+    height: auto !important;
+  }
+}
