@@ -1,20 +1,24 @@
 
 //  Dev proxy for the Angular dev server (avoids browser CORS in development).
 
+
+const ALB_HOST =
+  process.env.ALB_HOST || 'http://theatre-alb-1442845415.us-east-1.elb.amazonaws.com';
+
+// Map the app's service key 
 const SERVICES = {
-  identity: process.env.IDENTITY_HOST || 'http://54.209.202.149:8081',
-  // booking:    process.env.BOOKING_HOST    || 'http://107.21.38.75:8082',
-  // production: process.env.PRODUCTION_HOST || 'http://<host>:<port>',
-  // payment:    process.env.PAYMENT_HOST    || 'http://<host>:<port>',
+  identity: 'identity-service',
+  catalogue: 'catalogue-service',
+  booking: 'booking-service',
 };
 
-module.exports = Object.entries(SERVICES).reduce((cfg, [name, target]) => {
+module.exports = Object.entries(SERVICES).reduce((cfg, [name, albPath]) => {
   cfg[`/api/${name}`] = {
-    target,
+    target: ALB_HOST,
     secure: false,
     changeOrigin: true,
     logLevel: 'debug',
-    pathRewrite: { [`^/api/${name}`]: '' },
+    pathRewrite: { [`^/api/${name}`]: `/${albPath}` },
   };
   return cfg;
 }, {});

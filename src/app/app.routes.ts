@@ -183,5 +183,12 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: '' },
+
+  // Standalone 404 page (full-screen, no shell chrome).
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
+  { path: '**', redirectTo: '404' },
 ];
