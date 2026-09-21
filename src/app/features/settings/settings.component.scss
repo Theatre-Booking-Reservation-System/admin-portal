@@ -1,0 +1,81 @@
+:host {
+  display: block;
+}
+
+.page-head {
+  margin-bottom: 1.25rem;
+}
+.page-head__sub {
+  margin: 0.25rem 0 0;
+}
+
+.content {
+  max-width: 640px;
+}
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+/* Appearance */
+.appearance__sub {
+  margin: -0.5rem 0 1rem;
+}
+.themes {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.theme-opt {
+  border: 2px solid var(--brand-border);
+  background: var(--brand-surface);
+  border-radius: 14px;
+  padding: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 170px;
+}
+.theme-opt--active {
+  border-color: var(--brand-maroon);
+}
+.theme-swatch {
+  height: 90px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--brand-border);
+}
+.theme-swatch__bar {
+  height: 22px;
+}
+.theme-swatch__body {
+  flex: 1;
+}
+.theme-swatch--light .theme-swatch__bar {
+  background: #5a0f18;
+}
+.theme-swatch--light .theme-swatch__body {
+  background: #faf7f0;
+}
+.theme-swatch--dark .theme-swatch__bar {
+  background: #5a0f18;
+}
+.theme-swatch--dark .theme-swatch__body {
+  background: #121214;
+}
+.theme-opt__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.theme-opt__label mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

@@ -1,0 +1,40 @@
+<article class="doc">
+  <header class="doc__head">
+    <span class="doc__icon"><mat-icon>support_agent</mat-icon></span>
+    <div>
+      <h1 class="page-title">Support</h1>
+      <p class="muted doc__meta">We're here to help with bookings, payments and account questions.</p>
+    </div>
+  </header>
+
+  <section class="doc__body card">
+    <h2>Contact Us</h2>
+    <div class="contact-grid">
+      @for (c of contacts; track c.label) {
+        <div class="contact">
+          <span class="contact__icon"><mat-icon>{{ c.icon }}</mat-icon></span>
+          <div>
+            <div class="contact__label">{{ c.label }}</div>
+            <div class="contact__value">
+              @if (c.href) {
+                <a [href]="c.href">{{ c.value }}</a>
+              } @else {
+                {{ c.value }}
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="doc__body card" style="margin-top: 1rem;">
+    <h2>Frequently Asked Questions</h2>
+    @for (f of faqs; track f.q) {
+      <div class="faq">
+        <h3>{{ f.q }}</h3>
+        <p>{{ f.a }}</p>
+      </div>
+    }
+  </section>
+</article>

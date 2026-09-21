@@ -1,0 +1,30 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Settings</h1>
+    <p class="muted page-head__sub">Configure your account preferences.</p>
+  </div>
+</header>
+
+<div class="content">
+  <!-- Appearance -->
+  <section class="card">
+    <h2 class="card-title">Appearance</h2>
+    <p class="muted appearance__sub">Choose how the admin portal looks. This applies instantly.</p>
+    <div class="themes">
+      <button class="theme-opt" [class.theme-opt--active]="theme() === 'light'" (click)="setTheme('light')">
+        <span class="theme-swatch theme-swatch--light">
+          <span class="theme-swatch__bar"></span>
+          <span class="theme-swatch__body"></span>
+        </span>
+        <span class="theme-opt__label"><mat-icon>light_mode</mat-icon> Light</span>
+      </button>
+      <button class="theme-opt" [class.theme-opt--active]="theme() === 'dark'" (click)="setTheme('dark')">
+        <span class="theme-swatch theme-swatch--dark">
+          <span class="theme-swatch__bar"></span>
+          <span class="theme-swatch__body"></span>
+        </span>
+        <span class="theme-opt__label"><mat-icon>dark_mode</mat-icon> Dark</span>
+      </button>
+    </div>
+  </section>
+</div>
