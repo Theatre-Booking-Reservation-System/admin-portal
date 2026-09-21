@@ -1,0 +1,102 @@
+<nav class="crumbs">
+  <a routerLink="/payments">Payments</a>
+  <mat-icon>chevron_right</mat-icon>
+  <span>{{ payment.id }}</span>
+</nav>
+
+<header class="view-head">
+  <div class="view-head__left">
+    <h1 class="page-title">Payment Details</h1>
+    <span class="pill" [class]="statusClass(payment.status)">{{ payment.status }}</span>
+    <span class="view-head__sub muted">{{ payment.id }} · {{ payment.createdAt }}</span>
+  </div>
+  <div class="head-actions">
+    <button class="btn btn--ghost" (click)="downloadReceipt()"><mat-icon>picture_as_pdf</mat-icon> Download Receipt</button>
+  </div>
+</header>
+
+<div class="grid-top">
+  <!-- Payment Information -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>payments</mat-icon> Payment Information</h2>
+    <dl class="info">
+      <div><dt>Payment ID</dt><dd>{{ payment.id }}</dd></div>
+      <div><dt>Method</dt><dd>{{ payment.method }} •••• {{ payment.cardLast4 }}</dd></div>
+      <div><dt>Gateway Reference</dt><dd>{{ payment.gatewayRef }}</dd></div>
+      <div><dt>Amount</dt><dd>{{ payment.amount }}</dd></div>
+      <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(payment.status)">{{ payment.status }}</span></dd></div>
+      <div><dt>Date &amp; Time</dt><dd>{{ payment.createdAt }}</dd></div>
+    </dl>
+  </section>
+
+  <!-- Customer + Booking -->
+  <section class="card">
+    <h2 class="card-title"><mat-icon>person</mat-icon> Customer &amp; Booking</h2>
+    <dl class="info">
+      <div><dt>Customer</dt><dd>{{ payment.customerName }}</dd></div>
+      <div><dt>Email</dt><dd>{{ payment.email }}</dd></div>
+      <div><dt>Phone</dt><dd>{{ payment.phone }}</dd></div>
+      <div><dt>Booking</dt><dd><a class="link" [routerLink]="['/bookings', payment.bookingId]">{{ payment.bookingId }}</a></dd></div>
+      <div><dt>Production</dt><dd>{{ payment.production }}</dd></div>
+      <div><dt>Performance</dt><dd>{{ payment.performance }}</dd></div>
+      <div><dt>Seats</dt><dd>{{ payment.seats }}</dd></div>
+    </dl>
+  </section>
+
+  <!-- Payment Receipt -->
+  <section class="card receipt-card">
+    <div class="receipt__brand">
+      <span class="receipt__logo">ST</span>
+      <div>
+        <strong>SAPUMAL THEATRE</strong>
+        <small>Payment Receipt</small>
+      </div>
+    </div>
+    <dl class="receipt__info">
+      <div><dt>Receipt No</dt><dd>{{ payment.id }}</dd></div>
+      <div><dt>Booking ID</dt><dd>{{ payment.bookingId }}</dd></div>
+      <div><dt>Date</dt><dd>{{ payment.createdAt }}</dd></div>
+      <div><dt>Amount</dt><dd class="receipt__amount">{{ payment.amount }}</dd></div>
+      <div><dt>Method</dt><dd>{{ payment.method }}</dd></div>
+      <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(payment.status)">{{ payment.status }}</span></dd></div>
+    </dl>
+    <p class="receipt__thanks">Thank you for supporting the arts!</p>
+  </section>
+</div>
+
+<div class="grid-bottom">
+  <!-- Amount Breakdown -->
+  <section class="card">
+    <h2 class="card-title">Amount Breakdown</h2>
+    <ul class="breakdown">
+      @for (row of breakdown; track row.label) {
+        <li class="breakdown__row">
+          <span>{{ row.label }}</span>
+          <span>{{ row.amount }}</span>
+        </li>
+      }
+      <li class="breakdown__row breakdown__row--total">
+        <span>Total Paid</span>
+        <span>{{ total }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Transaction Timeline -->
+  <section class="card">
+    <h2 class="card-title">Transaction Timeline</h2>
+    <ul class="timeline">
+      @for (step of timeline; track step.label) {
+        <li class="timeline__step">
+          <span class="timeline__dot" [class.timeline__dot--done]="step.done">
+            <mat-icon>{{ step.done ? 'check' : 'radio_button_unchecked' }}</mat-icon>
+          </span>
+          <div class="timeline__meta">
+            <span class="timeline__label">{{ step.label }}</span>
+            <span class="timeline__time muted">{{ step.time }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+</div>

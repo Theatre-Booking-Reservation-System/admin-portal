@@ -138,6 +138,18 @@ export const routes: Routes = [
             (m) => m.ConcessionViewComponent,
           ),
       },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/payments/payments.component').then((m) => m.PaymentsComponent),
+      },
+      {
+        path: 'payments/:id',
+        loadComponent: () =>
+          import('./features/payments/payment-view/payment-view.component').then(
+            (m) => m.PaymentViewComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
