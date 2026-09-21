@@ -42,6 +42,14 @@ export class TopbarComponent {
     this.themeService.toggle();
   }
 
+  goToProfile(): void {
+    this.router.navigateByUrl('/profile');
+  }
+
+  goToSettings(): void {
+    this.router.navigateByUrl('/settings');
+  }
+
   logout(): void {
     this.auth.logout();
     this.router.navigateByUrl('/login');

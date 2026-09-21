@@ -155,8 +155,40 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/reports/reports.component').then((m) => m.ReportsComponent),
       },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+      },
+      {
+        path: 'privacy',
+        loadComponent: () =>
+          import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
+      },
+      {
+        path: 'terms',
+        loadComponent: () =>
+          import('./features/legal/terms.component').then((m) => m.TermsComponent),
+      },
+      {
+        path: 'support',
+        loadComponent: () =>
+          import('./features/legal/support.component').then((m) => m.SupportComponent),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: '' },
+
+  // Standalone 404 page (full-screen, no shell chrome).
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
+  { path: '**', redirectTo: '404' },
 ];

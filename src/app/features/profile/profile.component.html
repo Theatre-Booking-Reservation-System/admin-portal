@@ -1,0 +1,23 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">My Profile</h1>
+    <p class="muted page-head__sub">Your account details.</p>
+  </div>
+</header>
+
+<section class="card profile-card">
+  <div class="profile-card__head">
+    <div class="avatar-lg">{{ initials() }}</div>
+    <div>
+      <h2 class="profile-card__name">{{ name() }}</h2>
+      <span class="pill pill--info">{{ role() }}</span>
+    </div>
+  </div>
+
+  <dl class="info">
+    <div><dt>Full Name</dt><dd>{{ name() }}</dd></div>
+    <div><dt>Email Address</dt><dd>{{ email() }}</dd></div>
+    <div><dt>Role</dt><dd>{{ role() }}</dd></div>
+    <div><dt>User ID</dt><dd>{{ userId() }}</dd></div>
+  </dl>
+</section>

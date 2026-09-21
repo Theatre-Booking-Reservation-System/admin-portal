@@ -1,0 +1,20 @@
+<main class="nf">
+  <div class="nf__card">
+    <div class="nf__badge">
+      <mat-icon>theater_comedy</mat-icon>
+    </div>
+
+    <p class="nf__code">404</p>
+    <h1 class="nf__title">This scene doesn't exist</h1>
+    <p class="nf__msg">
+      The page you're looking for may have been moved, removed, or never took the stage.
+    </p>
+
+    <div class="nf__actions">
+      <button class="btn btn--ghost" (click)="goBack()"><mat-icon>arrow_back</mat-icon> Go Back</button>
+      <a class="btn btn--primary" [routerLink]="homeLink"><mat-icon>home</mat-icon> Back to Home</a>
+    </div>
+
+    <p class="nf__brand">SAPUMAL THEATRE · ART BRINGS US TOGETHER</p>
+  </div>
+</main>
