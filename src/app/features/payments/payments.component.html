@@ -1,0 +1,132 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Payments</h1>
+    <p class="muted page-head__sub">Track transactions, payment status and refunds across all bookings.</p>
+  </div>
+  <button class="btn btn--ghost" (click)="exportPdf()"><mat-icon>picture_as_pdf</mat-icon> Export PDF</button>
+</header>
+
+<!-- Summary strip -->
+<section class="stats">
+  @for (s of stats; track s.label) {
+    <article class="card stat">
+      <div class="stat__icon"><mat-icon>{{ s.icon }}</mat-icon></div>
+      <div class="stat__body">
+        <span class="stat__label">{{ s.label }}</span>
+        <span class="stat__value">{{ s.value }}</span>
+        @if (s.delta) {
+          <span class="stat__delta" [class.stat__delta--up]="s.deltaUp">
+            <mat-icon>{{ s.deltaUp ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            {{ s.delta }}
+          </span>
+        }
+      </div>
+    </article>
+  }
+</section>
+
+<section class="card">
+  <div class="toolbar">
+    <div class="tabs">
+      @for (t of filters(); track t.key) {
+        <button class="tab" [class.tab--active]="filter() === t.key" (click)="filter.set(t.key)">
+          {{ t.label }} ({{ t.count }})
+        </button>
+      }
+    </div>
+    <div class="search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search by payment, booking or customer..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Filter row -->
+  <div class="filters">
+    <div class="filter">
+      <label>Date Range</label>
+      <div class="select-chip"><mat-icon>calendar_today</mat-icon> All Dates</div>
+    </div>
+    <div class="filter">
+      <label>Payment Method</label>
+      <div class="select-wrap">
+        <mat-icon>credit_card</mat-icon>
+        <select [value]="methodFilter()" (change)="methodFilter.set($any($event.target).value)">
+          @for (m of methodOptions; track m) {
+            <option [value]="m">{{ m === 'All' ? 'All Methods' : m }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Payment Status</label>
+      <div class="select-wrap">
+        <mat-icon>filter_list</mat-icon>
+        <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+          @for (s of statusOptions; track s) {
+            <option [value]="s">{{ s === 'All' ? 'All Statuses' : s }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <button class="btn btn--ghost reset" (click)="resetFilters()"><mat-icon>refresh</mat-icon> Reset Filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Booking ID</th>
+          <th>Customer</th>
+          <th>Method</th>
+          <th>Amount</th>
+          <th>Date &amp; Time</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of filtered(); track p.id) {
+          <tr>
+            <td class="cell-title">{{ p.id }}</td>
+            <td><a class="link" [routerLink]="['/bookings', p.bookingId]">{{ p.bookingId }}</a></td>
+            <td>{{ p.customer }}</td>
+            <td>
+              <span class="method"><mat-icon>{{ methodIcons[p.method] }}</mat-icon> {{ p.method }}</span>
+            </td>
+            <td>{{ p.amount }}</td>
+            <td>
+              <div class="dt">
+                <span>{{ p.date }}</span>
+                <span class="dt__time muted">{{ p.time }}</span>
+              </div>
+            </td>
+            <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
+            <td>
+              <div class="actions">
+                <a class="icon-btn" [routerLink]="['/payments', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="empty">No payments found.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ payments.length }} payments</span>
+    <div class="pager">
+      <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+      <button class="pager__btn pager__btn--active">1</button>
+      <button class="pager__btn">2</button>
+      <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+  </div>
+</section>
