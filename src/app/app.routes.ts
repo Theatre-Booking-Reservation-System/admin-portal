@@ -150,6 +150,11 @@ export const routes: Routes = [
             (m) => m.PaymentViewComponent,
           ),
       },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/reports/reports.component').then((m) => m.ReportsComponent),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
