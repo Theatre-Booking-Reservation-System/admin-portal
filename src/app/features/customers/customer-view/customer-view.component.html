@@ -15,8 +15,24 @@
     @if (customer.loyaltyMember) {
       <span class="pill pill--warning"><mat-icon class="pill-icon">loyalty</mat-icon> Loyalty Member</span>
     }
+    @if (locked()) {
+      <span class="pill pill--danger"><mat-icon class="pill-icon">lock</mat-icon> Locked</span>
+    }
   </div>
 </header>
+
+@if (locked()) {
+  <div class="lock-banner">
+    <div class="lock-banner__msg">
+      <mat-icon>lock</mat-icon>
+      <span>
+        This account is locked after {{ customer.failedAttempts }} failed login attempts.
+        Unlock it so the customer can sign in again.
+      </span>
+    </div>
+    <button class="btn btn--primary" (click)="unlock()"><mat-icon>lock_open</mat-icon> Unlock Account</button>
+  </div>
+}
 
 <!-- Stat cards -->
 <section class="stats">

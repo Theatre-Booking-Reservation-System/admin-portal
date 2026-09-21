@@ -60,9 +60,20 @@
             <td>{{ c.totalBookings }}</td>
             <td>{{ money(c.totalSpend) }}</td>
             <td>{{ c.joined }}</td>
-            <td><span class="pill" [class]="c.status === 'Active' ? 'pill--success' : 'pill--muted'">{{ c.status }}</span></td>
             <td>
-              <a class="icon-btn" [routerLink]="['/customers', c.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+              @if (c.locked) {
+                <span class="pill pill--danger"><mat-icon class="pill-icon">lock</mat-icon> Locked</span>
+              } @else {
+                <span class="pill" [class]="c.status === 'Active' ? 'pill--success' : 'pill--muted'">{{ c.status }}</span>
+              }
+            </td>
+            <td>
+              <div class="actions">
+                <a class="icon-btn" [routerLink]="['/customers', c.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                @if (c.locked) {
+                  <button class="icon-btn icon-btn--unlock" aria-label="Unlock account" (click)="unlock(c)"><mat-icon>lock_open</mat-icon></button>
+                }
+              </div>
             </td>
           </tr>
         } @empty {

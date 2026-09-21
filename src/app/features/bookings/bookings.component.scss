@@ -3,10 +3,47 @@
 }
 
 .page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.25rem;
 }
 .page-head__sub {
   margin: 0.25rem 0 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn--primary {
+  background: var(--brand-maroon);
+  color: #fff;
+}
+.btn--primary:hover {
+  background: var(--brand-maroon-dark);
+}
+.btn--ghost {
+  background: transparent;
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+.btn--ghost:hover {
+  background: var(--brand-surface-2);
+}
+.btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .toolbar {
@@ -50,7 +87,7 @@
   border: 1px solid var(--brand-border);
   border-radius: 999px;
   padding: 0.45rem 0.9rem;
-  min-width: 260px;
+  min-width: 220px;
 }
 .search mat-icon {
   color: var(--brand-muted);
@@ -68,6 +105,49 @@
 }
 .search input::placeholder {
   color: var(--brand-muted);
+}
+
+/* Filter row */
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--brand-border);
+  border-bottom: 1px solid var(--brand-border);
+  margin-bottom: 1rem;
+}
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.filter label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand-muted);
+}
+.select-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  color: var(--brand-text-soft);
+  white-space: nowrap;
+  min-width: 150px;
+}
+.select-chip mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--brand-muted);
+}
+.reset {
+  margin-left: auto;
 }
 
 .table-wrap {
@@ -94,36 +174,21 @@
 .table tbody tr:hover {
   background: var(--brand-surface-2);
 }
-
-.cust {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.cust__avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--brand-maroon);
-  color: var(--brand-gold);
-  display: grid;
-  place-items: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  flex: none;
-}
-.cust__name {
+.cell-title {
   font-weight: 600;
 }
-
-.pill-icon {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
+.dt {
+  display: flex;
+  flex-direction: column;
+}
+.dt__time {
+  font-size: 0.75rem;
 }
 
-
-
+.actions {
+  display: flex;
+  gap: 0.25rem;
+}
 .icon-btn {
   border: none;
   background: transparent;
@@ -137,21 +202,10 @@
 .icon-btn:hover {
   background: var(--brand-maroon-soft);
 }
-.icon-btn--unlock {
-  color: var(--brand-success);
-}
-.icon-btn--unlock:hover {
-  background: var(--brand-success-bg);
-}
 .icon-btn mat-icon {
   font-size: 18px;
   width: 18px;
   height: 18px;
-}
-
-.actions {
-  display: flex;
-  gap: 0.25rem;
 }
 
 .empty {
@@ -203,4 +257,9 @@
   .search {
     min-width: 0;
   }
+  .reset {
+    margin-left: 0;
+  }
 }
+
+

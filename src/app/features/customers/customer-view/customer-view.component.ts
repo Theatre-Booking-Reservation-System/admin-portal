@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -34,7 +34,17 @@ export class CustomerViewComponent {
     totalBookings: 12,
     upcomingBookings: 2,
     totalSpend: 'LKR 48,000',
+    // Account lock (set after 3 failed login attempts by the Identity Service)
+    failedAttempts: 3,
   };
+
+  /** Whether the account is currently locked. */
+  readonly locked = signal(true);
+
+  unlock(): void {
+    // UI-only: clears the lock. Wires to the Identity Service unlock endpoint later.
+    this.locked.set(false);
+  }
 
   readonly bookings: BookingHistory[] = [
     { id: 'STB2025-001', production: 'Sanda Katha', date: '24 May 2025, 6:30 PM', seats: 'A12, A13', amount: 'LKR 4,000', status: 'Confirmed' },
