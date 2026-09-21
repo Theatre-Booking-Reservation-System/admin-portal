@@ -1,0 +1,144 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Reports &amp; Analytics</h1>
+    <p class="muted page-head__sub">Sales, bookings and occupancy insights across your productions.</p>
+  </div>
+  <button class="btn btn--primary" (click)="exportPdf()"><mat-icon>picture_as_pdf</mat-icon> Export PDF</button>
+</header>
+
+<!-- Toolbar -->
+<section class="card toolbar-card">
+  <div class="filter">
+    <label>Report Type</label>
+    <div class="segmented">
+      @for (t of reportTypes; track t) {
+        <button class="seg" [class.seg--active]="reportType() === t" (click)="reportType.set(t)">{{ t }}</button>
+      }
+    </div>
+  </div>
+  <div class="filter">
+    <label>Period</label>
+    <div class="select-wrap">
+      <mat-icon>calendar_today</mat-icon>
+      <select [value]="range()" (change)="range.set($any($event.target).value)">
+        @for (r of ranges; track r) { <option [value]="r">{{ r }}</option> }
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- KPI cards -->
+<section class="stats">
+  @for (k of kpis; track k.label) {
+    <article class="card stat">
+      <div class="stat__icon"><mat-icon>{{ k.icon }}</mat-icon></div>
+      <div class="stat__body">
+        <span class="stat__label">{{ k.label }}</span>
+        <span class="stat__value">{{ k.value }}</span>
+        @if (k.delta) {
+          <span class="stat__delta" [class.stat__delta--up]="k.deltaUp">
+            <mat-icon>{{ k.deltaUp ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            {{ k.delta }} vs last period
+          </span>
+        }
+      </div>
+    </article>
+  }
+</section>
+
+<!-- Chart + Payment mix -->
+<section class="grid-2">
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Revenue &amp; Bookings Trend</h2>
+      <span class="select-chip">{{ range() }}</span>
+    </header>
+
+    <div class="chart">
+      <div class="chart__yaxis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0</span></div>
+      <div class="chart__plot">
+        <div class="chart__bars">
+          @for (p of chart; track p.label) {
+            <div class="chart__bar-col"><div class="chart__bar" [style.height.%]="p.bookings * 100"></div></div>
+          }
+        </div>
+        <svg class="chart__line" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline [attr.points]="revenueLine()" />
+        </svg>
+        <div class="chart__xaxis">
+          @for (p of chart; track p.label) { <span>{{ p.label }}</span> }
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend__item"><i class="legend__dot legend__dot--bar"></i> Bookings</span>
+      <span class="legend__item"><i class="legend__dot legend__dot--line"></i> Revenue</span>
+    </div>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Payment Method Mix</h2>
+    </header>
+    <ul class="bars">
+      @for (m of paymentMethods; track m.method) {
+        <li class="barrow">
+          <div class="barrow__top">
+            <span>{{ m.method }}</span>
+            <span class="muted">{{ m.share }}%</span>
+          </div>
+          <div class="barrow__track"><div class="barrow__fill" [style.width.%]="m.share"></div></div>
+        </li>
+      }
+    </ul>
+  </article>
+</section>
+
+<!-- Top productions + Occupancy -->
+<section class="grid-2 grid-2--wide">
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Top Productions</h2>
+      <span class="muted">by tickets sold</span>
+    </header>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Production</th><th>Tickets</th><th>Revenue</th><th>Share</th></tr>
+        </thead>
+        <tbody>
+          @for (p of topProductions; track p.name) {
+            <tr>
+              <td class="cell-title">{{ p.name }}</td>
+              <td>{{ p.tickets }}</td>
+              <td>{{ p.revenue }}</td>
+              <td>
+                <div class="share">
+                  <div class="share__track"><div class="share__fill" [style.width.%]="p.share"></div></div>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <h2 class="card-title">Occupancy by Zone</h2>
+    </header>
+    <ul class="zones">
+      @for (z of zones; track z.zone) {
+        <li class="zone">
+          <div class="zone__top">
+            <span class="zone__name">{{ z.zone }}</span>
+            <span class="muted">{{ z.sold }} / {{ z.capacity }} · {{ pct(z) }}%</span>
+          </div>
+          <div class="barrow__track"><div class="barrow__fill" [style.width.%]="pct(z)"></div></div>
+        </li>
+      }
+    </ul>
+  </article>
+</section>
