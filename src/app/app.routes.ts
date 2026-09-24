@@ -184,6 +184,15 @@ export const routes: Routes = [
     ],
   },
 
+  // Standalone connection-error page (full-screen, no shell chrome).
+  {
+    path: 'connection-error',
+    loadComponent: () =>
+      import('./features/connection-error/connection-error.component').then(
+        (m) => m.ConnectionErrorComponent,
+      ),
+  },
+
   // Standalone 404 page (full-screen, no shell chrome).
   {
     path: '404',

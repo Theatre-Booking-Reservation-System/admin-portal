@@ -52,11 +52,22 @@
       <div class="grid-2-inner">
         <div>
           <label class="lbl">Date <span class="req">*</span></label>
-          <div class="input input--icon">
+          <div class="input input--icon" [class.input--error]="poyaError()">
             <mat-icon>calendar_today</mat-icon>
-            <input type="date" [(ngModel)]="date" name="date" required />
+            <input
+              type="date"
+              [min]="minDate"
+              [ngModel]="date"
+              (ngModelChange)="onDateChange($event)"
+              name="date"
+              required
+            />
           </div>
-          <span class="hint muted">Poya days are excluded automatically.</span>
+          @if (poyaError()) {
+            <span class="err"><mat-icon>block</mat-icon> {{ poyaError() }}</span>
+          } @else {
+            <span class="hint muted">Poya days are blocked automatically.</span>
+          }
         </div>
         <div>
           <label class="lbl">Time <span class="req">*</span></label>
