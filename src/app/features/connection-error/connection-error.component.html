@@ -1,0 +1,32 @@
+<main class="ce">
+  <div class="ce__card">
+    <div class="ce__badge">
+      <mat-icon>cloud_off</mat-icon>
+    </div>
+
+    <h1 class="ce__title">Can't reach the server</h1>
+    <p class="ce__msg">
+      We couldn't connect to Sapumal Theatre's services. This is usually a network issue or the
+      service being temporarily unavailable.
+    </p>
+
+    <ul class="ce__hints">
+      <li><mat-icon>wifi</mat-icon> Check your internet connection.</li>
+      <li><mat-icon>schedule</mat-icon> The service may be starting up — wait a moment.</li>
+      <li><mat-icon>refresh</mat-icon> Then try again.</li>
+    </ul>
+
+    @if (stillOffline()) {
+      <p class="ce__still"><mat-icon>error_outline</mat-icon> Still offline — please restore your connection first.</p>
+    }
+
+    <div class="ce__actions">
+      <button class="btn btn--primary" (click)="tryAgain()" [disabled]="retrying()">
+        <mat-icon>{{ retrying() ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+        {{ retrying() ? 'Retrying…' : 'Try Again' }}
+      </button>
+    </div>
+
+    <p class="ce__brand">SAPUMAL THEATRE · ART BRINGS US TOGETHER</p>
+  </div>
+</main>

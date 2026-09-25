@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { HolidayService } from '../../../core/services/holiday.service';
 
 @Component({
   selector: 'app-performance-form',
@@ -13,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class PerformanceFormComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly holidays = inject(HolidayService);
 
   readonly isEdit = signal(!!this.route.snapshot.paramMap.get('id'));
 
@@ -34,7 +36,16 @@ export class PerformanceFormComponent {
 
   readonly descLength = signal(0);
 
+  /** Earliest selectable date — no scheduling in the past. */
+  readonly minDate = new Date().toISOString().slice(0, 10);
+
+  /** Set when the chosen date falls on a poya day (blocks save). */
+  readonly poyaError = signal<string | null>(null);
+
   constructor() {
+    // Load poya days (from catalogue API, with a built-in fallback).
+    this.holidays.load();
+
     if (this.isEdit()) {
       this.production = 'Sanda Katha';
       this.showTitle = 'Sanda Katha';
@@ -44,6 +55,7 @@ export class PerformanceFormComponent {
       this.duration = 120;
       this.language = 'Sinhala';
       this.totalSeats = 200;
+      this.validateDate(this.date);
     }
   }
 
@@ -52,8 +64,32 @@ export class PerformanceFormComponent {
     this.descLength.set(value.length);
   }
 
+  /** Called when the date changes; blocks poya days with an inline message. */
+  onDateChange(value: string) {
+    this.date = value;
+    this.validateDate(value);
+  }
+
+  private validateDate(value: string) {
+    if (value && this.holidays.isPoya(value)) {
+      const name = this.holidays.nameFor(value);
+      this.poyaError.set(
+        `${name} is a poya day — performances cannot be scheduled on poya days. Please choose another date.`,
+      );
+      // Clear the invalid date so it can't be submitted.
+      this.date = '';
+    } else {
+      this.poyaError.set(null);
+    }
+  }
+
   save(event: Event) {
     event.preventDefault();
+    // Guard again in case the field was set programmatically.
+    if (this.holidays.isPoya(this.date)) {
+      this.validateDate(this.date);
+      return;
+    }
     this.router.navigateByUrl('/performances');
   }
 }
