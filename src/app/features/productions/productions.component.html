@@ -12,7 +12,7 @@
   <!-- Filter tabs + search -->
   <div class="toolbar">
     <div class="tabs">
-      @for (t of filters; track t.key) {
+      @for (t of filters(); track t.key) {
         <button
           class="tab"
           [class.tab--active]="filter() === t.key"
@@ -78,7 +78,7 @@
 
   <!-- Footer / pagination -->
   <div class="table-foot">
-    <span class="muted">Showing 1–{{ filtered().length }} of {{ productions.length }} productions</span>
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ productions().length }} productions</span>
     <div class="pager">
       <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
       <button class="pager__btn pager__btn--active">1</button>
