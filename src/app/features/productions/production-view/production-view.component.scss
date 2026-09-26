@@ -318,3 +318,58 @@
     flex-direction: column;
   }
 }
+
+/* Inline "add cast/crew" row */
+.add-row .input {
+  width: 100%;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--brand-text);
+  background: var(--brand-surface);
+  outline: none;
+}
+.add-row .input:focus {
+  border-color: var(--brand-maroon);
+}
+.icon-btn--primary {
+  color: #1e7e34;
+}
+.icon-btn--primary:hover {
+  background: rgba(30, 126, 52, 0.1);
+}
+.empty {
+  text-align: center;
+  padding: 1.5rem 0;
+  color: var(--brand-muted);
+}
+
+/* Editable pricing inputs */
+.table--sm .input {
+  width: 100%;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.82rem;
+  color: var(--brand-text);
+  background: var(--brand-surface);
+  outline: none;
+}
+.table--sm .input:focus {
+  border-color: var(--brand-maroon);
+}
+.base-price__input {
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--brand-text);
+  background: var(--brand-surface);
+  outline: none;
+  max-width: 200px;
+}
+.base-price__input:focus {
+  border-color: var(--brand-maroon);
+}

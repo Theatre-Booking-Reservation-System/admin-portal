@@ -3,7 +3,7 @@
 
 
 const ALB_HOST =
-  process.env.ALB_HOST || 'http://theatre-alb-1442845415.us-east-1.elb.amazonaws.com';
+  process.env.ALB_HOST || 'http://ec2-3-237-240-69.compute-1.amazonaws.com';
 
 // Map the app's service key 
 const SERVICES = {

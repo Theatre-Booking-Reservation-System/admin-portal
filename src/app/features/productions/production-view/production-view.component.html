@@ -68,27 +68,39 @@
   <section class="card">
     <header class="card-head">
       <h2 class="card-title">Cast &amp; Crew</h2>
-      <button class="btn btn--primary"><mat-icon>add</mat-icon> Add Cast/Crew</button>
+      <button class="btn btn--primary" (click)="openAddCast()"><mat-icon>add</mat-icon> Add Cast/Crew</button>
     </header>
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr><th>Name</th><th>Role</th><th>Type</th><th>Notes</th><th>Actions</th></tr>
+          <tr><th>Name</th><th>Role</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          @for (c of cast; track c.name) {
+          @for (c of cast(); track $index) {
             <tr>
               <td class="cell-title">{{ c.name }}</td>
               <td>{{ c.role }}</td>
-              <td><span class="pill pill--info">{{ c.type }}</span></td>
-              <td class="muted">{{ c.note }}</td>
               <td>
                 <div class="actions">
-                  <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
-                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+                  <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="removeCast($index)"><mat-icon>delete</mat-icon></button>
                 </div>
               </td>
             </tr>
+          }
+          @if (showAddCast()) {
+            <tr class="add-row">
+              <td><input class="input" type="text" placeholder="Name" [(ngModel)]="newCastName" name="newCastName" /></td>
+              <td><input class="input" type="text" placeholder="Role" [(ngModel)]="newCastRole" name="newCastRole" /></td>
+              <td>
+                <div class="actions">
+                  <button class="icon-btn icon-btn--primary" aria-label="Save" (click)="saveCast()"><mat-icon>check</mat-icon></button>
+                  <button class="icon-btn" aria-label="Cancel" (click)="cancelAddCast()"><mat-icon>close</mat-icon></button>
+                </div>
+              </td>
+            </tr>
+          }
+          @if (!cast().length && !showAddCast()) {
+            <tr><td colspan="3" class="empty">No cast or crew yet.</td></tr>
           }
         </tbody>
       </table>
@@ -135,12 +147,23 @@
   <section class="card">
     <header class="card-head">
       <h2 class="card-title">Ticket Pricing</h2>
-      <button class="btn btn--ghost"><mat-icon>edit</mat-icon> Edit Pricing</button>
+      @if (editingPricing()) {
+        <div class="head-actions">
+          <button class="btn btn--ghost" (click)="cancelPricing()">Cancel</button>
+          <button class="btn btn--primary" (click)="savePricing()"><mat-icon>check</mat-icon> Save Pricing</button>
+        </div>
+      } @else {
+        <button class="btn btn--ghost" (click)="startEditPricing()"><mat-icon>edit</mat-icon> Edit Pricing</button>
+      }
     </header>
 
     <div class="base-price">
       <span class="muted">Base Ticket Price (per production)</span>
-      <span class="base-price__val">{{ production.basePrice }}</span>
+      @if (editingPricing()) {
+        <input class="input base-price__input" type="text" [(ngModel)]="draftBasePrice" name="basePrice" />
+      } @else {
+        <span class="base-price__val">{{ basePrice() }}</span>
+      }
     </div>
 
     <div class="zones">
@@ -149,8 +172,18 @@
         <table class="table table--sm">
           <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
           <tbody>
-            @for (r of stalls; track r.seats) {
-              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            @if (editingPricing()) {
+              @for (r of draftStalls; track $index) {
+                <tr>
+                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'st-s-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'st-m-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'st-e-' + $index" /></td>
+                </tr>
+              }
+            } @else {
+              @for (r of stalls(); track $index) {
+                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+              }
             }
           </tbody>
         </table>
@@ -160,8 +193,18 @@
         <table class="table table--sm">
           <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
           <tbody>
-            @for (r of circle; track r.seats) {
-              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            @if (editingPricing()) {
+              @for (r of draftCircle; track $index) {
+                <tr>
+                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'ci-s-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'ci-m-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'ci-e-' + $index" /></td>
+                </tr>
+              }
+            } @else {
+              @for (r of circle(); track $index) {
+                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+              }
             }
           </tbody>
         </table>
@@ -171,8 +214,18 @@
         <table class="table table--sm">
           <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
           <tbody>
-            @for (r of upperCircle; track r.seats) {
-              <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+            @if (editingPricing()) {
+              @for (r of draftUpperCircle; track $index) {
+                <tr>
+                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'uc-s-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'uc-m-' + $index" /></td>
+                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'uc-e-' + $index" /></td>
+                </tr>
+              }
+            } @else {
+              @for (r of upperCircle(); track $index) {
+                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
+              }
             }
           </tbody>
         </table>
@@ -182,63 +235,28 @@
     <h3 class="sub-title">Concessions</h3>
     <table class="table table--sm concessions">
       <tbody>
-        @for (c of concessions; track c.type) {
-          <tr><td class="cell-title">{{ c.type }}</td><td class="muted">{{ c.discount }}</td></tr>
+        @if (editingPricing()) {
+          @for (c of draftConcessions; track $index) {
+            <tr>
+              <td class="cell-title"><input class="input" type="text" [(ngModel)]="c.type" [name]="'co-t-' + $index" /></td>
+              <td><input class="input" type="text" [(ngModel)]="c.discount" [name]="'co-d-' + $index" /></td>
+            </tr>
+          }
+        } @else {
+          @for (c of concessions(); track $index) {
+            <tr><td class="cell-title">{{ c.type }}</td><td class="muted">{{ c.discount }}</td></tr>
+          }
         }
       </tbody>
     </table>
   </section>
 }
 
-<!-- ── Media & Documents ────────────────────────────────────────────────── -->
+<!-- ── Media ────────────────────────────────────────────────────────────── -->
 @if (tab() === 'media') {
-  <div class="grid-2">
-    <section class="card">
-      <h2 class="card-title">Poster Image</h2>
-      <div class="poster-lg poster-lg--media">{{ production.abbr }}</div>
-      <button class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
-    </section>
-
-    <section class="card">
-      <header class="card-head">
-        <h2 class="card-title">Gallery Images</h2>
-        <button class="btn btn--ghost"><mat-icon>upload</mat-icon> Upload Image</button>
-      </header>
-      <div class="gallery">
-        <div class="gallery__item">SK</div>
-        <div class="gallery__item">SK</div>
-        <div class="gallery__item">SK</div>
-        <div class="gallery__item">SK</div>
-      </div>
-    </section>
-  </div>
-
   <section class="card">
-    <header class="card-head">
-      <h2 class="card-title">Documents</h2>
-      <button class="btn btn--primary"><mat-icon>upload</mat-icon> Upload Document</button>
-    </header>
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr><th>File Name</th><th>Type</th><th>Uploaded Date</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-          @for (d of documents; track d.name) {
-            <tr>
-              <td class="cell-title">{{ d.name }}</td>
-              <td><span class="pill pill--muted">{{ d.type }}</span></td>
-              <td>{{ d.uploaded }}</td>
-              <td>
-                <div class="actions">
-                  <button class="icon-btn" aria-label="Download"><mat-icon>download</mat-icon></button>
-                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <h2 class="card-title">Poster Image</h2>
+    <div class="poster-lg poster-lg--media">{{ production.abbr }}</div>
+    <button class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
   </section>
 }

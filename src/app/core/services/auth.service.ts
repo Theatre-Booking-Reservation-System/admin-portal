@@ -33,6 +33,14 @@ export class AuthService {
           if (!res.accessToken) {
             throw new Error(res.statusDescription || 'Invalid credentials');
           }
+          // This is the admin portal — patrons may authenticate against the
+          // identity service but must not be allowed in. Reject before storing
+          // any session so no token/user is persisted.
+          if ((res.role ?? '').toUpperCase() === 'PATRON') {
+            throw new Error(
+              'This account does not have permission to access the admin portal.',
+            );
+          }
           this.persistSession(res);
         }),
       );

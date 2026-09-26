@@ -18,7 +18,7 @@
       <mat-icon>search</mat-icon>
       <input
         type="text"
-        placeholder="Search by name, email or phone..."
+        placeholder="Search by name or email..."
         [value]="search()"
         (input)="onSearch($any($event.target).value)"
       />
@@ -32,9 +32,9 @@
           <th>Customer</th>
           <th>Email</th>
           <th>Phone</th>
+          <th>Birthday</th>
+          <th>NIC</th>
           <th>Type</th>
-          <th>Bookings</th>
-          <th>Total Spend</th>
           <th>Joined</th>
           <th>Status</th>
           <th>Actions</th>
@@ -51,14 +51,14 @@
             </td>
             <td>{{ c.email }}</td>
             <td>{{ c.phone }}</td>
+            <td>{{ c.birthday }}</td>
+            <td>{{ c.nic }}</td>
             <td>
               <span class="pill" [class]="c.type === 'Loyalty' ? 'pill--warning' : 'pill--muted'">
                 @if (c.type === 'Loyalty') { <mat-icon class="pill-icon">loyalty</mat-icon> }
                 {{ c.type }}
               </span>
             </td>
-            <td>{{ c.totalBookings }}</td>
-            <td>{{ money(c.totalSpend) }}</td>
             <td>{{ c.joined }}</td>
             <td>
               @if (c.locked) {

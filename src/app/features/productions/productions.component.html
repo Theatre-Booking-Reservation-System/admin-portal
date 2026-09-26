@@ -27,11 +27,62 @@
       <mat-icon>search</mat-icon>
       <input
         type="text"
-        placeholder="Search productions..."
+        placeholder="Search by name..."
         [value]="search()"
         (input)="onSearch($any($event.target).value)"
       />
     </div>
+  </div>
+
+  <!-- Filters: category, language, date range -->
+  <div class="filters">
+    <div class="filter">
+      <label>Category</label>
+      <select
+        class="input"
+        [value]="categoryFilter()"
+        (change)="categoryFilter.set($any($event.target).value)"
+      >
+        <option value="">All Categories</option>
+        @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+      </select>
+    </div>
+
+    <div class="filter">
+      <label>Language</label>
+      <select
+        class="input"
+        [value]="languageFilter()"
+        (change)="languageFilter.set($any($event.target).value)"
+      >
+        <option value="">All Languages</option>
+        @for (l of languages; track l) { <option [value]="l">{{ l }}</option> }
+      </select>
+    </div>
+
+    <div class="filter">
+      <label>From</label>
+      <input
+        type="date"
+        class="input"
+        [value]="dateFrom()"
+        (change)="dateFrom.set($any($event.target).value)"
+      />
+    </div>
+
+    <div class="filter">
+      <label>To</label>
+      <input
+        type="date"
+        class="input"
+        [value]="dateTo()"
+        (change)="dateTo.set($any($event.target).value)"
+      />
+    </div>
+
+    <button type="button" class="btn btn--ghost reset" (click)="resetFilters()">
+      <mat-icon>refresh</mat-icon> Reset
+    </button>
   </div>
 
   <!-- Table -->

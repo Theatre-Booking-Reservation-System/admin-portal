@@ -12,11 +12,14 @@ interface Production {
   genre: string;
   startDate: string;
   endDate: string;
-  status: 'Active' | 'Inactive' | 'Upcoming' | 'Archived';
+  /** Raw ISO "YYYY-MM-DD" dates kept for range filtering. */
+  releaseIso: string;
+  endIso: string;
+  status: 'Active' | 'Inactive' | 'Upcoming';
   abbr: string;
 }
 
-type FilterKey = 'All' | 'Active' | 'Inactive' | 'Upcoming' | 'Archived';
+type FilterKey = 'All' | 'Active' | 'Inactive' | 'Upcoming';
 
 @Component({
   selector: 'app-productions',
@@ -33,7 +36,16 @@ export class ProductionsComponent {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
+  // Extra filters: category (genre), language, and a start-date range.
+  readonly categoryFilter = signal('');
+  readonly languageFilter = signal('');
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
+
   readonly productions = signal<Production[]>([]);
+
+  readonly languages = ['Sinhala', 'Tamil', 'English'];
+  readonly categories = ['Drama', 'Musical', 'Comedy', 'Dance', 'Opera', 'Children'];
 
   readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
     const list = this.productions();
@@ -42,17 +54,32 @@ export class ProductionsComponent {
       { key: 'Active', label: 'Active', count: list.filter((p) => p.status === 'Active').length },
       { key: 'Inactive', label: 'Inactive', count: list.filter((p) => p.status === 'Inactive').length },
       { key: 'Upcoming', label: 'Upcoming', count: list.filter((p) => p.status === 'Upcoming').length },
-      { key: 'Archived', label: 'Archived', count: list.filter((p) => p.status === 'Archived').length },
     ];
   });
 
   readonly filtered = computed(() => {
     const q = this.search().toLowerCase().trim();
     const f = this.filter();
+    const cat = this.categoryFilter().toLowerCase();
+    const lang = this.languageFilter().toLowerCase();
+    const from = this.dateFrom();
+    const to = this.dateTo();
     return this.productions().filter((p) => {
       const matchesFilter = f === 'All' || p.status === f;
       const matchesSearch = !q || p.title.toLowerCase().includes(q);
-      return matchesFilter && matchesSearch;
+      const matchesCategory = !cat || p.genre.toLowerCase() === cat;
+      const matchesLanguage = !lang || p.language.toLowerCase() === lang;
+      // Range test against the production's start (release) date.
+      const matchesFrom = !from || (p.releaseIso !== '' && p.releaseIso >= from);
+      const matchesTo = !to || (p.releaseIso !== '' && p.releaseIso <= to);
+      return (
+        matchesFilter &&
+        matchesSearch &&
+        matchesCategory &&
+        matchesLanguage &&
+        matchesFrom &&
+        matchesTo
+      );
     });
   });
 
@@ -92,6 +119,15 @@ export class ProductionsComponent {
   onSearch(value: string) {
     this.search.set(value);
   }
+
+  resetFilters() {
+    this.search.set('');
+    this.filter.set('All');
+    this.categoryFilter.set('');
+    this.languageFilter.set('');
+    this.dateFrom.set('');
+    this.dateTo.set('');
+  }
 }
 
 const LANGUAGE_LABEL: Record<string, Production['language']> = {
@@ -110,6 +146,8 @@ function toView(p: ProductionItem): Production {
     genre: p.genre || '—',
     startDate: formatDate(p.releaseDate),
     endDate: formatDate(p.endDate),
+    releaseIso: isoDate(p.releaseDate),
+    endIso: isoDate(p.endDate),
     status: deriveStatus(p),
     abbr: initials(title),
   };
@@ -136,6 +174,12 @@ function formatDate(dateStr?: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Normalize to "YYYY-MM-DD" for range comparison (handles datetime strings). */
+function isoDate(value?: string): string {
+  if (!value) return '';
+  return value.length > 10 ? value.slice(0, 10) : value;
 }
 
 function initials(title: string): string {
