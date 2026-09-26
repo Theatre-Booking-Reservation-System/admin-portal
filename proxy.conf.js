@@ -9,6 +9,7 @@ const ALB_HOST =
 const SERVICES = {
   identity: 'identity-service',
   catalogue: 'catalogue-service',
+  seat: 'seat-service',
   booking: 'booking-service',
 };
 

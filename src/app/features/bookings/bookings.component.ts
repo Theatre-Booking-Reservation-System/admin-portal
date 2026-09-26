@@ -1,7 +1,10 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { BookingService } from '../../core/services/booking.service';
+import { BookingResponse } from '../../core/models/booking.models';
 
+/** View-model shape the template renders. */
 interface Booking {
   id: string;
   customer: string;
@@ -10,12 +13,19 @@ interface Booking {
   performanceTime: string;
   seats: string;
   amount: string;
-  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded';
-  payment: 'Paid' | 'Pending' | 'Refunded';
+  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded' | 'Expired';
+  payment: 'Paid' | 'Pending' | 'Refunded' | 'Failed';
 }
 
 type FilterKey = 'All' | 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded';
 
+/**
+ * Bookings list.
+ *
+ * The Booking Service exposes lookup-by-reference and per-patron listing, but
+ * no "list every booking" endpoint. So the search box looks a booking up by
+ * its reference (e.g. STB-20260913-00847) and shows the match here.
+ */
 @Component({
   selector: 'app-bookings',
   standalone: true,
@@ -24,35 +34,31 @@ type FilterKey = 'All' | 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded';
   styleUrl: './bookings.component.scss',
 })
 export class BookingsComponent {
+  private readonly bookingApi = inject(BookingService);
+
   readonly search = signal('');
   readonly filter = signal<FilterKey>('All');
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
-  readonly bookings: Booking[] = [
-    { id: 'STB2025-001', customer: 'Nimal Perera', production: 'Sanda Katha', performanceDate: '24 May 2025', performanceTime: '6:30 PM', seats: 'A12, A13', amount: 'LKR 4,000', status: 'Confirmed', payment: 'Paid' },
-    { id: 'STB2025-002', customer: 'Kavindi Silva', production: 'Dharma Patha', performanceDate: '25 May 2025', performanceTime: '6:30 PM', seats: 'B5, B6, B7', amount: 'LKR 6,000', status: 'Pending', payment: 'Pending' },
-    { id: 'STB2025-003', customer: 'Ruwan Jayasuriya', production: 'Yathra Oruwa', performanceDate: '25 May 2025', performanceTime: '3:00 PM', seats: 'C10', amount: 'LKR 2,000', status: 'Confirmed', payment: 'Paid' },
-    { id: 'STB2025-004', customer: 'Tharindu Fernando', production: 'Sanda Katha', performanceDate: '26 May 2025', performanceTime: '10:00 AM', seats: 'A5, A6', amount: 'LKR 4,000', status: 'Confirmed', payment: 'Paid' },
-    { id: 'STB2025-005', customer: 'Anjali Fernando', production: 'The Merchant of Venice', performanceDate: '26 May 2025', performanceTime: '6:30 PM', seats: 'D1, D2, D3', amount: 'LKR 6,000', status: 'Cancelled', payment: 'Refunded' },
-    { id: 'STB2025-006', customer: 'Kasun De Silva', production: 'Sanda Katha', performanceDate: '27 May 2025', performanceTime: '3:00 PM', seats: 'AA1, AA2', amount: 'LKR 5,000', status: 'Confirmed', payment: 'Paid' },
-    { id: 'STB2025-007', customer: 'Sithumi Perera', production: 'Dharma Patha', performanceDate: '28 May 2025', performanceTime: '6:30 PM', seats: 'B8, B9', amount: 'LKR 4,000', status: 'Pending', payment: 'Pending' },
-    { id: 'STB2025-008', customer: 'Dinesh Mendis', production: 'Ahas Maliga', performanceDate: '29 May 2025', performanceTime: '3:00 PM', seats: 'C15, C16', amount: 'LKR 4,000', status: 'Confirmed', payment: 'Paid' },
-    { id: 'STB2025-009', customer: 'Chamila Wijesinghe', production: 'Yathra Oruwa', performanceDate: '30 May 2025', performanceTime: '6:30 PM', seats: 'D4, D5', amount: 'LKR 4,000', status: 'Refunded', payment: 'Refunded' },
-    { id: 'STB2025-010', customer: 'Isuru Perera', production: 'Sanda Katha', performanceDate: '31 May 2025', performanceTime: '6:30 PM', seats: 'A8, A9, A10', amount: 'LKR 6,000', status: 'Confirmed', payment: 'Paid' },
-  ];
+  readonly bookings = signal<Booking[]>([]);
 
-  readonly filters: { key: FilterKey; label: string; count: number }[] = [
-    { key: 'All', label: 'All', count: 137 },
-    { key: 'Confirmed', label: 'Confirmed', count: 98 },
-    { key: 'Pending', label: 'Pending', count: 12 },
-    { key: 'Cancelled', label: 'Cancelled', count: 18 },
-    { key: 'Refunded', label: 'Refunded', count: 9 },
-  ];
+  readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
+    const list = this.bookings();
+    return [
+      { key: 'All', label: 'All', count: list.length },
+      { key: 'Confirmed', label: 'Confirmed', count: list.filter((b) => b.status === 'Confirmed').length },
+      { key: 'Pending', label: 'Pending', count: list.filter((b) => b.status === 'Pending').length },
+      { key: 'Cancelled', label: 'Cancelled', count: list.filter((b) => b.status === 'Cancelled').length },
+      { key: 'Refunded', label: 'Refunded', count: list.filter((b) => b.payment === 'Refunded').length },
+    ];
+  });
 
   readonly filtered = computed(() => {
     const q = this.search().toLowerCase().trim();
     const f = this.filter();
-    return this.bookings.filter((b) => {
-      const matchesFilter = f === 'All' || b.status === f;
+    return this.bookings().filter((b) => {
+      const matchesFilter = f === 'All' || b.status === f || (f === 'Refunded' && b.payment === 'Refunded');
       const matchesSearch =
         !q ||
         b.id.toLowerCase().includes(q) ||
@@ -70,6 +76,8 @@ export class BookingsComponent {
       case 'Pending':
         return 'pill--warning';
       case 'Cancelled':
+      case 'Failed':
+      case 'Expired':
         return 'pill--danger';
       case 'Refunded':
         return 'pill--info';
@@ -80,5 +88,72 @@ export class BookingsComponent {
 
   onSearch(value: string) {
     this.search.set(value);
+    const ref = value.trim();
+    // Look up by full booking reference (STB-YYYYMMDD-NNNNN).
+    if (/^STB-\d{8}-\d+$/i.test(ref)) {
+      this.lookupByRef(ref);
+    }
   }
+
+  private lookupByRef(ref: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.bookingApi.getBookingByRef(ref).subscribe({
+      next: (res) => {
+        this.bookings.set(res.bookingId ? [toView(res)] : []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.bookings.set([]);
+        this.error.set(`No booking found for reference "${ref}".`);
+        this.loading.set(false);
+      },
+    });
+  }
+}
+
+const STATUS_LABEL: Record<string, Booking['status']> = {
+  PENDING: 'Pending',
+  CONFIRMED: 'Confirmed',
+  CANCELLED_PATRON: 'Cancelled',
+  CANCELLED_ADMIN: 'Cancelled',
+  EXPIRED: 'Expired',
+};
+
+const PAYMENT_LABEL: Record<string, Booking['payment']> = {
+  UNPAID: 'Pending',
+  PAID: 'Paid',
+  REFUNDED: 'Refunded',
+  FAILED: 'Failed',
+};
+
+/** Map a BookingResponse to the template's view-model. */
+function toView(b: BookingResponse): Booking {
+  const seats = (b.lines ?? [])
+    .map((l) => l.seatRef)
+    .filter(Boolean)
+    .join(', ');
+  return {
+    id: b.bookingRef || b.bookingId,
+    customer: b.guestEmail || '—',
+    production: '—',
+    performanceDate: formatDate(b.createdAt),
+    performanceTime: '',
+    seats: seats || '—',
+    amount: formatLkr(b.totalLkr),
+    status: (b.status && STATUS_LABEL[b.status]) || 'Pending',
+    payment: (b.paymentStatus && PAYMENT_LABEL[b.paymentStatus]) || 'Pending',
+  };
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatLkr(amount?: number): string {
+  if (amount === null || amount === undefined) return '—';
+  return `LKR ${amount.toLocaleString('en-LK')}`;
 }

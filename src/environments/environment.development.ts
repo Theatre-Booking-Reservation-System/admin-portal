@@ -7,6 +7,7 @@ export const environment = {
   services: {
     identity: '/api/identity',
     catalogue: '/api/catalogue',
+    seat: '/api/seat',
     booking: '/api/booking',
   },
 };

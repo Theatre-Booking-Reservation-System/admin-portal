@@ -8,6 +8,7 @@ export const environment = {
   services: {
     identity: `${ALB}/identity-service`,
     catalogue: `${ALB}/catalogue-service`,
+    seat: `${ALB}/seat-service`,
     booking: `${ALB}/booking-service`,
   },
 };

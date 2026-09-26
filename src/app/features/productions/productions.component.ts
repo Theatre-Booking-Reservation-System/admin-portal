@@ -1,11 +1,14 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { CatalogueService } from '../../core/services/catalogue.service';
+import { ProductionItem } from '../../core/models/catalogue.models';
 
+/** View-model shape the template renders. */
 interface Production {
   id: string;
   title: string;
-  language: 'Sinhala' | 'Tamil' | 'English';
+  language: 'Sinhala' | 'Tamil' | 'English' | '—';
   genre: string;
   startDate: string;
   endDate: string;
@@ -23,36 +26,55 @@ type FilterKey = 'All' | 'Active' | 'Inactive' | 'Upcoming' | 'Archived';
   styleUrl: './productions.component.scss',
 })
 export class ProductionsComponent {
+  private readonly catalogue = inject(CatalogueService);
+
   readonly search = signal('');
   readonly filter = signal<FilterKey>('All');
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
-  readonly productions: Production[] = [
-    { id: 'p1', title: 'Sanda Katha', language: 'Sinhala', genre: 'Drama', startDate: '24 May 2025', endDate: '2 Jun 2025', status: 'Active', abbr: 'SK' },
-    { id: 'p2', title: 'Yathra Oruwa', language: 'Tamil', genre: 'Drama', startDate: '25 May 2025', endDate: '3 Jun 2025', status: 'Active', abbr: 'YO' },
-    { id: 'p3', title: 'The Merchant of Venice', language: 'English', genre: 'Drama', startDate: '28 May 2025', endDate: '6 Jun 2025', status: 'Active', abbr: 'MV' },
-    { id: 'p4', title: 'Dharma Patha', language: 'Sinhala', genre: 'Drama', startDate: '28 May 2025', endDate: '6 Jun 2025', status: 'Active', abbr: 'DP' },
-    { id: 'p5', title: 'Ahas Maliga', language: 'Sinhala', genre: 'Drama', startDate: '30 May 2025', endDate: '7 Jun 2025', status: 'Inactive', abbr: 'AM' },
-    { id: 'p6', title: 'Maanavan', language: 'Tamil', genre: 'Drama', startDate: '31 May 2025', endDate: '8 Jun 2025', status: 'Active', abbr: 'MN' },
-    { id: 'p7', title: 'Rathu Pata', language: 'Sinhala', genre: 'Musical', startDate: '10 Jun 2025', endDate: '15 Jun 2025', status: 'Upcoming', abbr: 'RP' },
-  ];
+  readonly productions = signal<Production[]>([]);
 
-  readonly filters: { key: FilterKey; label: string; count: number }[] = [
-    { key: 'All', label: 'All', count: this.productions.length },
-    { key: 'Active', label: 'Active', count: this.productions.filter((p) => p.status === 'Active').length },
-    { key: 'Inactive', label: 'Inactive', count: this.productions.filter((p) => p.status === 'Inactive').length },
-    { key: 'Upcoming', label: 'Upcoming', count: this.productions.filter((p) => p.status === 'Upcoming').length },
-    { key: 'Archived', label: 'Archived', count: this.productions.filter((p) => p.status === 'Archived').length },
-  ];
+  readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
+    const list = this.productions();
+    return [
+      { key: 'All', label: 'All', count: list.length },
+      { key: 'Active', label: 'Active', count: list.filter((p) => p.status === 'Active').length },
+      { key: 'Inactive', label: 'Inactive', count: list.filter((p) => p.status === 'Inactive').length },
+      { key: 'Upcoming', label: 'Upcoming', count: list.filter((p) => p.status === 'Upcoming').length },
+      { key: 'Archived', label: 'Archived', count: list.filter((p) => p.status === 'Archived').length },
+    ];
+  });
 
   readonly filtered = computed(() => {
     const q = this.search().toLowerCase().trim();
     const f = this.filter();
-    return this.productions.filter((p) => {
+    return this.productions().filter((p) => {
       const matchesFilter = f === 'All' || p.status === f;
       const matchesSearch = !q || p.title.toLowerCase().includes(q);
       return matchesFilter && matchesSearch;
     });
   });
+
+  constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.catalogue.getAllProductions().subscribe({
+      next: (res) => {
+        const items = res.productions ?? [];
+        this.productions.set(items.map((p) => toView(p)));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load productions. Please try again.');
+        this.loading.set(false);
+      },
+    });
+  }
 
   statusClass(s: Production['status']): string {
     switch (s) {
@@ -70,4 +92,55 @@ export class ProductionsComponent {
   onSearch(value: string) {
     this.search.set(value);
   }
+}
+
+const LANGUAGE_LABEL: Record<string, Production['language']> = {
+  SINHALA: 'Sinhala',
+  TAMIL: 'Tamil',
+  ENGLISH: 'English',
+};
+
+/** Map a catalogue ProductionItem to the template's view-model. */
+function toView(p: ProductionItem): Production {
+  const title = p.titleEn || p.titleSi || p.titleTa || 'Untitled';
+  return {
+    id: p.productionId,
+    title,
+    language: (p.language && LANGUAGE_LABEL[p.language]) || '—',
+    genre: p.genre || '—',
+    startDate: formatDate(p.releaseDate),
+    endDate: formatDate(p.endDate),
+    status: deriveStatus(p),
+    abbr: initials(title),
+  };
+}
+
+/** status: 1 = Active, 9 = Inactive/Archived; future release date = Upcoming. */
+function deriveStatus(p: ProductionItem): Production['status'] {
+  if (p.status === 9) return 'Inactive';
+  if (isFuture(p.releaseDate)) return 'Upcoming';
+  return 'Active';
+}
+
+function isFuture(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d.getTime() > today.getTime();
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function initials(title: string): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '??';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
