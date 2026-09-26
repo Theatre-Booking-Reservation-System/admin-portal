@@ -194,8 +194,8 @@
 
 .login__error {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: flex-start;
+  gap: 0.45rem;
   width: 100%;
   margin: 0 0 0.85rem;
   padding: 0.6rem 0.75rem;
@@ -203,11 +203,16 @@
   background: #fbeae8;
   color: #b42318;
   font-size: 0.82rem;
+  line-height: 1.35;
 }
 .login__error mat-icon {
+  flex: 0 0 auto;
   font-size: 18px;
   width: 18px;
   height: 18px;
+  line-height: 18px;
+  margin-top: 1px;
+  overflow: visible;
 }
 .login__submit mat-icon {
   font-size: 18px;

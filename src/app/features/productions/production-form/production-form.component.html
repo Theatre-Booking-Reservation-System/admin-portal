@@ -30,7 +30,7 @@
       <label class="lbl">Title <span class="req">*</span></label>
       <input class="input" type="text" placeholder="Enter production title" [(ngModel)]="title" name="title" required />
 
-      <div class="grid-2-inner">
+      <div class="grid-2-inner grid-2-inner--spaced">
         <div>
           <label class="lbl">Language <span class="req">*</span></label>
           <select class="input" [(ngModel)]="language" name="language" required>
@@ -72,18 +72,6 @@
           <span class="muted">PNG, JPG. Max 5MB</span>
         </div>
       }
-
-      <label class="lbl">Status</label>
-      <div class="radios">
-        <label class="radio">
-          <input type="radio" name="status" value="Active" [(ngModel)]="status" />
-          <span>Active</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="status" value="Inactive" [(ngModel)]="status" />
-          <span>Inactive</span>
-        </label>
-      </div>
     </section>
   </div>
 
@@ -103,8 +91,17 @@
         <input class="input" type="number" min="0" placeholder="Enter duration" [(ngModel)]="duration" name="duration" required />
       </div>
       <div>
-        <label class="lbl">Intermission (minutes)</label>
-        <input class="input" type="number" min="0" placeholder="Enter intermission" [(ngModel)]="intermission" name="intermission" />
+        <label class="lbl">Base Ticket Price (LKR) <span class="req">*</span></label>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Enter base ticket price"
+          [(ngModel)]="baseTicketCost"
+          name="baseTicketCost"
+          required
+        />
       </div>
     </div>
   </section>
@@ -117,49 +114,75 @@
         <label class="lbl">Start Date <span class="req">*</span></label>
         <div class="input input--icon">
           <mat-icon>calendar_today</mat-icon>
-          <input type="date" [(ngModel)]="startDate" name="startDate" required />
+          <input
+            type="date"
+            [(ngModel)]="startDate"
+            name="startDate"
+            (ngModelChange)="validateDates()"
+            required
+          />
         </div>
       </div>
       <div>
         <label class="lbl">End Date <span class="req">*</span></label>
-        <div class="input input--icon">
+        <div class="input input--icon" [class.input--error]="dateError()">
           <mat-icon>calendar_today</mat-icon>
-          <input type="date" [(ngModel)]="endDate" name="endDate" required />
+          <input
+            type="date"
+            [(ngModel)]="endDate"
+            name="endDate"
+            [min]="startDate || null"
+            (ngModelChange)="validateDates()"
+            required
+          />
         </div>
       </div>
     </div>
+    @if (dateError()) {
+      <p class="field-error"><mat-icon>error_outline</mat-icon> {{ dateError() }}</p>
+    }
   </section>
 
-  <!-- Additional details + Media -->
-  <div class="grid-2">
-    <section class="card">
-      <h2 class="card-title">Additional Details</h2>
-      <label class="lbl">Cast</label>
-      <textarea class="input" rows="2" placeholder="Enter main cast (optional)..." [(ngModel)]="cast" name="cast"></textarea>
-      <label class="lbl">Crew</label>
-      <textarea class="input" rows="2" placeholder="Enter crew details (optional)..." [(ngModel)]="crew" name="crew"></textarea>
-    </section>
+  <!-- Cast & Crew -->
+  <section class="card">
+    <header class="card-head">
+      <h2 class="card-title">Cast &amp; Crew</h2>
+      <button type="button" class="btn btn--ghost" (click)="addMember()">
+        <mat-icon>add</mat-icon> Add Cast/Crew
+      </button>
+    </header>
 
-    <section class="card">
-      <h2 class="card-title">Media &amp; Documents</h2>
-      <div class="grid-2-inner">
+    @for (member of castCrew; track $index) {
+      <div class="castcrew-row">
         <div>
-          <label class="lbl">Gallery Images</label>
-          <div class="upload upload--sm">
-            <mat-icon>cloud_upload</mat-icon>
-            <p>Click to upload images</p>
-            <span class="muted">PNG, JPG. Max 5MB each</span>
-          </div>
+          <label class="lbl">Name</label>
+          <input
+            class="input"
+            type="text"
+            placeholder="Enter name"
+            [(ngModel)]="member.name"
+            [name]="'ccName' + $index"
+          />
         </div>
         <div>
-          <label class="lbl">Additional Documents</label>
-          <div class="upload upload--sm">
-            <mat-icon>cloud_upload</mat-icon>
-            <p>Click to upload files</p>
-            <span class="muted">PDF, DOC, DOCX. Max 10MB each</span>
-          </div>
+          <label class="lbl">Position</label>
+          <input
+            class="input"
+            type="text"
+            placeholder="e.g. Director, Lead Actor"
+            [(ngModel)]="member.position"
+            [name]="'ccPosition' + $index"
+          />
         </div>
+        <button
+          type="button"
+          class="icon-btn icon-btn--danger castcrew-remove"
+          (click)="removeMember($index)"
+          aria-label="Remove"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
       </div>
-    </section>
-  </div>
+    }
+  </section>
 </form>

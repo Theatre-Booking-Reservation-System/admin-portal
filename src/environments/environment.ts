@@ -1,6 +1,6 @@
 // Production/default environment.
 // All microservices sit behind a single AWS ALB, routed by path prefix.
-const ALB = 'http://theatre-alb-1442845415.us-east-1.elb.amazonaws.com';
+const ALB = 'http://ec2-3-237-240-69.compute-1.amazonaws.com';
 
 export const environment = {
   production: true,

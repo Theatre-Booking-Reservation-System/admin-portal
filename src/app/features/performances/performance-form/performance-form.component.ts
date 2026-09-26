@@ -19,22 +19,12 @@ export class PerformanceFormComponent {
   readonly isEdit = signal(!!this.route.snapshot.paramMap.get('id'));
 
   production = '';
-  showTitle = '';
-  description = '';
   date = '';
   time = '';
-  venue = '';
-  duration: number | null = null;
-  language = '';
-  totalSeats: number | null = 200;
-  allowOnlineBooking = true;
-  visibleToPublic = true;
+  sessionType = '';
 
   readonly productions = ['Sanda Katha', 'Yathra Oruwa', 'The Merchant of Venice', 'Dharma Patha', 'Ahas Maliga'];
-  readonly venues = ['Main Theatre', 'Studio Theatre'];
-  readonly languages = ['Sinhala', 'Tamil', 'English'];
-
-  readonly descLength = signal(0);
+  readonly sessionTypes = ['Matinee', 'Evening'];
 
   /** Earliest selectable date — no scheduling in the past. */
   readonly minDate = new Date().toISOString().slice(0, 10);
@@ -48,20 +38,11 @@ export class PerformanceFormComponent {
 
     if (this.isEdit()) {
       this.production = 'Sanda Katha';
-      this.showTitle = 'Sanda Katha';
       this.date = '2025-05-24';
       this.time = '18:30';
-      this.venue = 'Main Theatre';
-      this.duration = 120;
-      this.language = 'Sinhala';
-      this.totalSeats = 200;
+      this.sessionType = 'Evening';
       this.validateDate(this.date);
     }
-  }
-
-  onDescInput(value: string) {
-    this.description = value;
-    this.descLength.set(value.length);
   }
 
   /** Called when the date changes; blocks poya days with an inline message. */

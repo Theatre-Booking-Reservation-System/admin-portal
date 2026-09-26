@@ -80,6 +80,10 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
+/* Extra top gap above the Language / Genre row */
+.grid-2-inner--spaced {
+  margin-top: 1rem;
+}
 
 /* Consistent vertical rhythm between the stacked blocks in the form */
 form > .grid-2,
@@ -239,4 +243,80 @@ select.input {
   .page-head {
     flex-direction: column;
   }
+}
+
+/* Cast & Crew section */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.card-head .card-title {
+  margin: 0;
+}
+
+.castcrew-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
+}
+.castcrew-row:last-child {
+  margin-bottom: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  background: var(--brand-surface);
+  color: var(--brand-text-soft);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--brand-hover, rgba(0, 0, 0, 0.04));
+}
+.icon-btn--danger {
+  color: #c0392b;
+}
+.icon-btn--danger:hover {
+  background: rgba(192, 57, 43, 0.1);
+}
+.castcrew-remove {
+  margin-bottom: 1px;
+}
+
+@media (max-width: 900px) {
+  .castcrew-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .castcrew-remove {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+/* Date-range validation feedback */
+.input--error {
+  border-color: #c0392b;
+}
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #c0392b;
+}
+.field-error mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
