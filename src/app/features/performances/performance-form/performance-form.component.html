@@ -1,4 +1,4 @@
-<form (submit)="save($event)">
+<form #form="ngForm" (submit)="save($event, form)">
   <nav class="crumbs">
     <a routerLink="/performances">Performances</a>
     <mat-icon>chevron_right</mat-icon>
@@ -14,52 +14,119 @@
     </div>
     <div class="head-actions">
       <a class="btn btn--ghost" routerLink="/performances">Cancel</a>
-      <button type="submit" class="btn btn--primary">{{ isEdit() ? 'Update Performance' : 'Save Performance' }}</button>
+      <button
+        type="submit"
+        class="btn btn--primary"
+        [disabled]="saving() || form.invalid || !date || !!poyaError() || !!rangeError()"
+      >
+        @if (saving()) {
+          {{ isEdit() ? 'Updating…' : 'Saving…' }}
+        } @else {
+          {{ isEdit() ? 'Update Performance' : 'Save Performance' }}
+        }
+      </button>
     </div>
   </header>
+
+  @if (saveError()) {
+    <p class="err err--block"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
+  }
 
   <section class="card">
     <h2 class="card-title">Schedule</h2>
 
     <label class="lbl">Production <span class="req">*</span></label>
-    <select class="input" [(ngModel)]="production" name="production" required>
-      <option value="" disabled selected>Select production</option>
-      @for (p of productions; track p) { <option [value]="p">{{ p }}</option> }
+    <select
+      class="input"
+      [ngModel]="production()"
+      (ngModelChange)="onProductionChange($event)"
+      name="production"
+      required
+      #productionCtrl="ngModel"
+      [disabled]="productionsLoading()"
+    >
+      <option value="" disabled selected>
+        {{ productionsLoading() ? 'Loading productions…' : 'Select production' }}
+      </option>
+      @for (p of productions(); track p.id) { <option [value]="p.id">{{ p.title }}</option> }
     </select>
+    @if (productionsError()) {
+      <span class="err"><mat-icon>error_outline</mat-icon> {{ productionsError() }}</span>
+    } @else if (productionCtrl.invalid && productionCtrl.touched) {
+      <span class="err"><mat-icon>error_outline</mat-icon> Please select a production.</span>
+    }
 
     <div class="grid-2-inner">
       <div>
         <label class="lbl">Date <span class="req">*</span></label>
-        <div class="input input--icon" [class.input--error]="poyaError()">
+        <div class="input input--icon" [class.input--error]="poyaError() || rangeError()">
           <mat-icon>calendar_today</mat-icon>
           <input
             type="date"
-            [min]="minDate"
+            [min]="dateMin()"
+            [max]="dateMax() || null"
             [ngModel]="date"
             (ngModelChange)="onDateChange($event)"
             name="date"
+            [disabled]="!production()"
             required
           />
         </div>
         @if (poyaError()) {
           <span class="err"><mat-icon>block</mat-icon> {{ poyaError() }}</span>
+        } @else if (rangeError()) {
+          <span class="err"><mat-icon>block</mat-icon> {{ rangeError() }}</span>
+        } @else if (!production()) {
+          <span class="hint muted">Select a production first to choose a date.</span>
         } @else {
-          <span class="hint muted">Poya days are blocked automatically.</span>
+          <span class="hint muted">Poya days are blocked automatically. Allowed: {{ dateMin() }}@if (dateMax()) { – {{ dateMax() }} }.</span>
         }
       </div>
       <div>
         <label class="lbl">Time <span class="req">*</span></label>
-        <div class="input input--icon">
+        <div class="input input--icon" [class.input--error]="timeCtrl.invalid && timeCtrl.touched">
           <mat-icon>schedule</mat-icon>
-          <input type="time" [(ngModel)]="time" name="time" required />
+          <input type="time" [(ngModel)]="time" name="time" required #timeCtrl="ngModel" />
         </div>
+        @if (timeCtrl.invalid && timeCtrl.touched) {
+          <span class="err"><mat-icon>error_outline</mat-icon> Time is required.</span>
+        }
       </div>
     </div>
 
     <label class="lbl">Session Type <span class="req">*</span></label>
-    <select class="input" [(ngModel)]="sessionType" name="sessionType" required>
+    <select class="input" [(ngModel)]="sessionType" name="sessionType" required #sessionCtrl="ngModel">
       <option value="" disabled selected>Select session type</option>
       @for (s of sessionTypes; track s) { <option [value]="s">{{ s }}</option> }
     </select>
+    @if (sessionCtrl.invalid && sessionCtrl.touched) {
+      <span class="err"><mat-icon>error_outline</mat-icon> Please select a session type.</span>
+    }
   </section>
 </form>
+
+<!-- Loading overlay while the create/update request is in flight -->
+@if (saving()) {
+  <div class="overlay" role="alertdialog" aria-modal="true" aria-busy="true">
+    <div class="loader-card">
+      <span class="spinner" aria-hidden="true"></span>
+      <p class="loader-text">{{ isEdit() ? 'Updating performance…' : 'Saving performance…' }}</p>
+    </div>
+  </div>
+}
+
+<!-- Success modal after a successful save -->
+@if (showSuccess()) {
+  <div class="overlay" (click)="dismissSuccess()">
+    <div class="modal" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+      <div class="modal__icon modal__icon--success"><mat-icon>check_circle</mat-icon></div>
+      <h2 class="modal__title">{{ isEdit() ? 'Performance updated' : 'Performance created' }}</h2>
+      <p class="modal__message">
+        {{ isEdit()
+          ? 'Your changes have been saved successfully.'
+          : 'The performance has been scheduled successfully.' }}
+      </p>
+      <button class="modal__btn" (click)="dismissSuccess()">Done</button>
+    </div>
+  </div>
+}

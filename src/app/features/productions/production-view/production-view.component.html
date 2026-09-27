@@ -188,16 +188,4 @@
   </section>
 }
 
-<!-- ── Media ────────────────────────────────────────────────────────────── -->
-@if (tab() === 'media') {
-  <section class="card">
-    <h2 class="card-title">Poster Image</h2>
-    @if (prod.poster) {
-      <img class="poster-lg poster-lg--media poster-lg--img" [src]="prod.poster" [alt]="prod.title + ' poster'" />
-    } @else {
-      <div class="poster-lg poster-lg--media">{{ prod.abbr }}</div>
-    }
-  </section>
-}
-
 }

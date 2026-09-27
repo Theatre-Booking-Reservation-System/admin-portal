@@ -1,7 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { catchError, map, of, tap } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { Injectable, signal } from '@angular/core';
 
 /** A poya (full-moon) public holiday. Dates are ISO "YYYY-MM-DD". */
 export interface PoyaDay {
@@ -12,39 +9,18 @@ export interface PoyaDay {
 /**
  * Provides poya (full-moon) days used to block performance scheduling.
  *
- * Poya days are reference data, so they're fetched from the catalogue service.
- * The exact endpoint may still change on the backend, so we degrade gracefully:
- * on any failure we fall back to a built-in list and the UI still blocks those
- * dates. Swap FALLBACK_POYA / the endpoint once the API is confirmed.
+ * Poya days come from a built-in hardcoded list (POYA_DAYS below) — no API
+ * call. Update POYA_DAYS to change the blocked dates.
  */
 @Injectable({ providedIn: 'root' })
 export class HolidayService {
-  private readonly http = inject(HttpClient);
-  private readonly endpoint = `${environment.services.catalogue}/poya-days`;
-
   /** Set of ISO date strings that are poya days. */
-  readonly poyaDates = signal<Set<string>>(new Set(FALLBACK_POYA.map((p) => p.date)));
-  readonly loaded = signal(false);
+  readonly poyaDates = signal<Set<string>>(new Set(POYA_DAYS.map((p) => p.date)));
+  readonly loaded = signal(true);
 
-  /** Fetch poya days from the API; keep the fallback on failure. */
+  /** No-op: poya days are hardcoded, nothing to fetch. */
   load(): void {
-    if (this.loaded()) return;
-
-    this.http
-      .get<PoyaDay[]>(this.endpoint)
-      .pipe(
-        map((days) => days.map((d) => normalize(d.date)).filter(Boolean) as string[]),
-        tap((dates) => {
-          if (dates.length) this.poyaDates.set(new Set(dates));
-          this.loaded.set(true);
-        }),
-        catchError(() => {
-          // Keep the fallback set; mark as loaded so we don't spin on errors.
-          this.loaded.set(true);
-          return of<string[]>([]);
-        }),
-      )
-      .subscribe();
+    // Intentionally empty — data is sourced from the hardcoded POYA_DAYS list.
   }
 
   /** True if the given ISO date ("YYYY-MM-DD") is a poya day. */
@@ -57,7 +33,7 @@ export class HolidayService {
   nameFor(dateStr: string | null | undefined): string | null {
     const iso = normalize(dateStr);
     if (!iso) return null;
-    const match = FALLBACK_POYA.find((p) => p.date === iso);
+    const match = POYA_DAYS.find((p) => p.date === iso);
     return match?.name ?? 'Poya day';
   }
 }
@@ -69,10 +45,10 @@ function normalize(value: string | null | undefined): string {
 }
 
 /**
- * Built-in poya days (Sri Lanka). Used until the catalogue API endpoint is
- * confirmed, and as a fallback if the request fails. Covers 2025–2026.
+ * Built-in poya days (Sri Lanka), covering 2025–2026. This is the sole source
+ * of poya data — update this list to change the blocked dates.
  */
-const FALLBACK_POYA: PoyaDay[] = [
+const POYA_DAYS: PoyaDay[] = [
   { date: '2025-01-13', name: 'Duruthu Poya' },
   { date: '2025-02-12', name: 'Navam Poya' },
   { date: '2025-03-13', name: 'Medin Poya' },

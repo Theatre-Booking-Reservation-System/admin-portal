@@ -1,8 +1,19 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { HolidayService } from '../../../core/services/holiday.service';
+import { CatalogueService } from '../../../core/services/catalogue.service';
+import { PerformanceRequest, SessionType } from '../../../core/models/catalogue.models';
+
+/** Minimal shape the production dropdown needs. */
+interface ProductionOption {
+  id: string;
+  title: string;
+  /** Run window (YYYY-MM-DD); performances must fall within it. */
+  releaseDate: string;
+  endDate: string;
+}
 
 @Component({
   selector: 'app-performance-form',
@@ -15,29 +26,59 @@ export class PerformanceFormComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly holidays = inject(HolidayService);
+  private readonly catalogue = inject(CatalogueService);
 
-  readonly isEdit = signal(!!this.route.snapshot.paramMap.get('id'));
+  private readonly performanceId = this.route.snapshot.paramMap.get('id');
+  readonly isEdit = signal(!!this.performanceId);
 
-  production = '';
+  readonly saving = signal(false);
+  readonly saveError = signal<string | null>(null);
+  readonly showSuccess = signal(false);
+
+  /** Selected production id (signal so the date range can react to it). */
+  readonly production = signal('');
   date = '';
   time = '';
   sessionType = '';
 
-  readonly productions = ['Sanda Katha', 'Yathra Oruwa', 'The Merchant of Venice', 'Dharma Patha', 'Ahas Maliga'];
+  /** Productions loaded from the catalogue API for the dropdown. */
+  readonly productions = signal<ProductionOption[]>([]);
+  readonly productionsLoading = signal(true);
+  readonly productionsError = signal<string | null>(null);
+
   readonly sessionTypes = ['Matinee', 'Evening'];
 
-  /** Earliest selectable date — no scheduling in the past. */
-  readonly minDate = new Date().toISOString().slice(0, 10);
+  /** Today (YYYY-MM-DD) — no scheduling in the past. */
+  readonly today = new Date().toISOString().slice(0, 10);
+
+  /** The currently selected production (drives the allowed date range). */
+  readonly selectedProduction = computed<ProductionOption | null>(
+    () => this.productions().find((p) => p.id === this.production()) ?? null,
+  );
+
+  /**
+   * Earliest selectable date: the production's release date, but never in the
+   * past (so you can't schedule before today either).
+   */
+  readonly dateMin = computed<string>(() => {
+    const release = this.selectedProduction()?.releaseDate ?? '';
+    return release && release > this.today ? release : this.today;
+  });
+
+  /** Latest selectable date: the production's end date (empty = no upper bound). */
+  readonly dateMax = computed<string>(() => this.selectedProduction()?.endDate ?? '');
 
   /** Set when the chosen date falls on a poya day (blocks save). */
   readonly poyaError = signal<string | null>(null);
+  /** Set when the chosen date falls outside the production's run window. */
+  readonly rangeError = signal<string | null>(null);
 
   constructor() {
     // Load poya days (from catalogue API, with a built-in fallback).
     this.holidays.load();
+    this.loadProductions();
 
     if (this.isEdit()) {
-      this.production = 'Sanda Katha';
       this.date = '2025-05-24';
       this.time = '18:30';
       this.sessionType = 'Evening';
@@ -45,32 +86,129 @@ export class PerformanceFormComponent {
     }
   }
 
-  /** Called when the date changes; blocks poya days with an inline message. */
+  /** Load the productions for the dropdown from the catalogue API. */
+  private loadProductions(): void {
+    this.productionsLoading.set(true);
+    this.productionsError.set(null);
+    this.catalogue.getAllProductions().subscribe({
+      next: (res) => {
+        this.productions.set(
+          (res.productions ?? []).map((p) => ({
+            id: p.productionId,
+            title: p.title || 'Untitled',
+            releaseDate: isoDate(p.releaseDate),
+            endDate: isoDate(p.endDate),
+          })),
+        );
+        this.productionsLoading.set(false);
+      },
+      error: () => {
+        this.productionsError.set('Could not load productions.');
+        this.productionsLoading.set(false);
+      },
+    });
+  }
+
+  /** Called when the production changes; re-checks the date against the new range. */
+  onProductionChange(id: string) {
+    this.production.set(id);
+    if (this.date) this.validateDate(this.date);
+  }
+
+  /** Called when the date changes; blocks poya days and out-of-range dates. */
   onDateChange(value: string) {
     this.date = value;
     this.validateDate(value);
   }
 
   private validateDate(value: string) {
+    // Poya-day check first.
     if (value && this.holidays.isPoya(value)) {
       const name = this.holidays.nameFor(value);
       this.poyaError.set(
         `${name} is a poya day — performances cannot be scheduled on poya days. Please choose another date.`,
       );
-      // Clear the invalid date so it can't be submitted.
+      this.rangeError.set(null);
       this.date = '';
-    } else {
-      this.poyaError.set(null);
-    }
-  }
-
-  save(event: Event) {
-    event.preventDefault();
-    // Guard again in case the field was set programmatically.
-    if (this.holidays.isPoya(this.date)) {
-      this.validateDate(this.date);
       return;
     }
+    this.poyaError.set(null);
+
+    // Range check against the selected production's run window.
+    const prod = this.selectedProduction();
+    if (value && prod) {
+      if (prod.releaseDate && value < prod.releaseDate) {
+        this.rangeError.set(
+          `Date must be on or after the production's release date (${prod.releaseDate}).`,
+        );
+        this.date = '';
+        return;
+      }
+      if (prod.endDate && value > prod.endDate) {
+        this.rangeError.set(
+          `Date must be on or before the production's end date (${prod.endDate}).`,
+        );
+        this.date = '';
+        return;
+      }
+    }
+    this.rangeError.set(null);
+  }
+
+  save(event: Event, form: NgForm) {
+    event.preventDefault();
+    if (this.saving()) return;
+
+    // Re-validate (poya + range) in case a field was set programmatically.
+    this.validateDate(this.date);
+
+    // Block submission if required fields are missing or the date is invalid.
+    if (form.invalid || !this.date || this.poyaError() || this.rangeError()) {
+      form.control.markAllAsTouched();
+      return;
+    }
+
+    const payload: PerformanceRequest = {
+      productionId: this.production(),
+      date: this.date,
+      time: this.time.length === 5 ? `${this.time}:00` : this.time, // HH:mm → HH:mm:ss
+      sessionType: this.sessionType.toUpperCase() as SessionType,
+      status: 1,
+    };
+
+    this.saving.set(true);
+    this.saveError.set(null);
+
+    const request$ =
+      this.isEdit() && this.performanceId
+        ? this.catalogue.updatePerformance(this.performanceId, payload)
+        : this.catalogue.createPerformance(payload);
+
+    request$.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.showSuccess.set(true);
+      },
+      error: () => {
+        this.saveError.set(
+          this.isEdit()
+            ? 'Could not update the performance. Please try again.'
+            : 'Could not create the performance. Please try again.',
+        );
+        this.saving.set(false);
+      },
+    });
+  }
+
+  /** Close the success modal and return to the performances list. */
+  dismissSuccess(): void {
+    this.showSuccess.set(false);
     this.router.navigateByUrl('/performances');
   }
+}
+
+/** Normalise an API date/datetime to "YYYY-MM-DD". */
+function isoDate(value?: string): string {
+  if (!value) return '';
+  return value.length > 10 ? value.slice(0, 10) : value;
 }

@@ -6,7 +6,7 @@ import { ProductionItem } from '../../../core/models/catalogue.models';
 import { SeatService } from '../../../core/services/seat.service';
 import { SeatSection, SeatZoneItem } from '../../../core/models/seat.models';
 
-type Tab = 'overview' | 'cast' | 'performances' | 'pricing' | 'media';
+type Tab = 'overview' | 'cast' | 'performances' | 'pricing';
 
 interface CastMember {
   name: string;
@@ -77,7 +77,6 @@ export class ProductionViewComponent {
     // Performances tab hidden for now — not wired to the performances API yet.
     // { key: 'performances', label: 'Performances' },
     { key: 'pricing', label: 'Ticket Pricing' },
-    { key: 'media', label: 'Media' },
   ];
 
   /** The production loaded from GET /productions/{id}. */
