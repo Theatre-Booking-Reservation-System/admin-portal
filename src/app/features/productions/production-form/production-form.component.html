@@ -1,4 +1,4 @@
-<form (submit)="save($event)">
+<form #form="ngForm" (submit)="save($event, form)">
   <!-- Breadcrumb -->
   <nav class="crumbs">
     <a routerLink="/productions">Productions</a>
@@ -16,11 +16,19 @@
     </div>
     <div class="head-actions">
       <a class="btn btn--ghost" routerLink="/productions">Cancel</a>
-      <button type="submit" class="btn btn--primary">
-        {{ isEdit() ? 'Update Production' : 'Save Production' }}
+      <button type="submit" class="btn btn--primary" [disabled]="saving() || form.invalid || !!dateError()">
+        @if (saving()) {
+          {{ isEdit() ? 'Updating…' : 'Saving…' }}
+        } @else {
+          {{ isEdit() ? 'Update Production' : 'Save Production' }}
+        }
       </button>
     </div>
   </header>
+
+  @if (saveError()) {
+    <p class="field-error"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
+  }
 
   <!-- Basic Information + Poster -->
   <div class="grid-2">
@@ -28,22 +36,31 @@
       <h2 class="card-title">Basic Information</h2>
 
       <label class="lbl">Title <span class="req">*</span></label>
-      <input class="input" type="text" placeholder="Enter production title" [(ngModel)]="title" name="title" required />
+      <input class="input" type="text" placeholder="Enter production title" [(ngModel)]="title" name="title" required #titleCtrl="ngModel" [class.input--error]="titleCtrl.invalid && titleCtrl.touched" />
+      @if (titleCtrl.invalid && titleCtrl.touched) {
+        <p class="field-error"><mat-icon>error_outline</mat-icon> Title is required.</p>
+      }
 
       <div class="grid-2-inner grid-2-inner--spaced">
         <div>
           <label class="lbl">Language <span class="req">*</span></label>
-          <select class="input" [(ngModel)]="language" name="language" required>
+          <select class="input" [(ngModel)]="language" name="language" required #languageCtrl="ngModel" [class.input--error]="languageCtrl.invalid && languageCtrl.touched">
             <option value="" disabled selected>Select language</option>
             @for (l of languages; track l) { <option [value]="l">{{ l }}</option> }
           </select>
+          @if (languageCtrl.invalid && languageCtrl.touched) {
+            <p class="field-error"><mat-icon>error_outline</mat-icon> Please select a language.</p>
+          }
         </div>
         <div>
           <label class="lbl">Genre <span class="req">*</span></label>
-          <select class="input" [(ngModel)]="genre" name="genre" required>
+          <select class="input" [(ngModel)]="genre" name="genre" required #genreCtrl="ngModel" [class.input--error]="genreCtrl.invalid && genreCtrl.touched">
             <option value="" disabled selected>Select genre</option>
             @for (g of genres; track g) { <option [value]="g">{{ g }}</option> }
           </select>
+          @if (genreCtrl.invalid && genreCtrl.touched) {
+            <p class="field-error"><mat-icon>error_outline</mat-icon> Please select a genre.</p>
+          }
         </div>
       </div>
 
@@ -53,24 +70,63 @@
         placeholder="Enter production description..."
         maxlength="500"
         rows="4"
-        [value]="description"
-        (input)="onDescInput($any($event.target).value)"
+        [(ngModel)]="description"
+        (ngModelChange)="onDescInput($event)"
         name="description"
+        required
+        #descCtrl="ngModel"
+        [class.input--error]="descCtrl.invalid && descCtrl.touched"
       ></textarea>
       <span class="counter muted">{{ descLength() }}/500 characters</span>
+      @if (descCtrl.invalid && descCtrl.touched) {
+        <p class="field-error"><mat-icon>error_outline</mat-icon> Description is required.</p>
+      }
     </section>
 
     <section class="card">
       <h2 class="card-title">Poster Image</h2>
-      @if (isEdit()) {
-        <div class="poster-preview">SK</div>
-        <button type="button" class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
+
+      <input
+        #posterInput
+        type="file"
+        accept="image/png,image/jpeg"
+        hidden
+        (change)="onPosterSelected($event)"
+      />
+
+      @if (posterPreview()) {
+        <div class="poster-preview">
+          <img [src]="posterPreview()" alt="Poster preview" />
+        </div>
+        <div class="poster-actions">
+          <button type="button" class="btn btn--ghost" (click)="posterInput.click()">
+            <mat-icon>photo_camera</mat-icon> Change Image
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="removePoster()">
+            <mat-icon>delete</mat-icon> Remove
+          </button>
+        </div>
       } @else {
-        <div class="upload">
+        <div
+          class="upload"
+          [class.upload--drag]="posterDragging()"
+          role="button"
+          tabindex="0"
+          (click)="posterInput.click()"
+          (keydown.enter)="posterInput.click()"
+          (keydown.space)="posterInput.click()"
+          (dragover)="onPosterDragOver($event)"
+          (dragleave)="onPosterDragLeave($event)"
+          (drop)="onPosterDrop($event)"
+        >
           <mat-icon>cloud_upload</mat-icon>
           <p>Click to upload or drag and drop</p>
           <span class="muted">PNG, JPG. Max 5MB</span>
         </div>
+      }
+
+      @if (posterError()) {
+        <p class="field-error"><mat-icon>error_outline</mat-icon> {{ posterError() }}</p>
       }
     </section>
   </div>
@@ -81,14 +137,24 @@
     <div class="grid-3-inner">
       <div>
         <label class="lbl">Age Restriction <span class="req">*</span></label>
-        <select class="input" [(ngModel)]="ageRestriction" name="ageRestriction" required>
+        <select class="input" [(ngModel)]="ageRestriction" name="ageRestriction" required #ageCtrl="ngModel" [class.input--error]="ageCtrl.invalid && ageCtrl.touched">
           <option value="" disabled selected>Select age restriction</option>
           @for (a of ageRestrictions; track a) { <option [value]="a">{{ a }}</option> }
         </select>
+        @if (ageCtrl.invalid && ageCtrl.touched) {
+          <p class="field-error"><mat-icon>error_outline</mat-icon> Please select an age restriction.</p>
+        }
       </div>
       <div>
         <label class="lbl">Duration (minutes) <span class="req">*</span></label>
-        <input class="input" type="number" min="0" placeholder="Enter duration" [(ngModel)]="duration" name="duration" required />
+        <input class="input" type="number" min="1" placeholder="Enter duration" [(ngModel)]="duration" name="duration" required #durationCtrl="ngModel" [class.input--error]="durationCtrl.invalid && durationCtrl.touched" />
+        @if (durationCtrl.invalid && durationCtrl.touched) {
+          <p class="field-error">
+            <mat-icon>error_outline</mat-icon>
+            @if (durationCtrl.errors?.['required']) { Duration is required. }
+            @else { Duration must be at least 1 minute. }
+          </p>
+        }
       </div>
       <div>
         <label class="lbl">Base Ticket Price (LKR) <span class="req">*</span></label>
@@ -101,7 +167,16 @@
           [(ngModel)]="baseTicketCost"
           name="baseTicketCost"
           required
+          #priceCtrl="ngModel"
+          [class.input--error]="priceCtrl.invalid && priceCtrl.touched"
         />
+        @if (priceCtrl.invalid && priceCtrl.touched) {
+          <p class="field-error">
+            <mat-icon>error_outline</mat-icon>
+            @if (priceCtrl.errors?.['required']) { Base ticket price is required. }
+            @else { Price cannot be negative. }
+          </p>
+        }
       </div>
     </div>
   </section>
@@ -111,8 +186,8 @@
     <h2 class="card-title">Schedule</h2>
     <div class="grid-2-inner">
       <div>
-        <label class="lbl">Start Date <span class="req">*</span></label>
-        <div class="input input--icon">
+        <label class="lbl">Release Date <span class="req">*</span></label>
+        <div class="input input--icon" [class.input--error]="startCtrl.invalid && startCtrl.touched">
           <mat-icon>calendar_today</mat-icon>
           <input
             type="date"
@@ -120,12 +195,16 @@
             name="startDate"
             (ngModelChange)="validateDates()"
             required
+            #startCtrl="ngModel"
           />
         </div>
+        @if (startCtrl.invalid && startCtrl.touched) {
+          <p class="field-error"><mat-icon>error_outline</mat-icon> Release date is required.</p>
+        }
       </div>
       <div>
         <label class="lbl">End Date <span class="req">*</span></label>
-        <div class="input input--icon" [class.input--error]="dateError()">
+        <div class="input input--icon" [class.input--error]="(endCtrl.invalid && endCtrl.touched) || dateError()">
           <mat-icon>calendar_today</mat-icon>
           <input
             type="date"
@@ -134,8 +213,12 @@
             [min]="startDate || null"
             (ngModelChange)="validateDates()"
             required
+            #endCtrl="ngModel"
           />
         </div>
+        @if (endCtrl.invalid && endCtrl.touched) {
+          <p class="field-error"><mat-icon>error_outline</mat-icon> End date is required.</p>
+        }
       </div>
     </div>
     @if (dateError()) {
@@ -186,3 +269,29 @@
     }
   </section>
 </form>
+
+<!-- Loading overlay while the create/update request is in flight -->
+@if (saving()) {
+  <div class="overlay" role="alertdialog" aria-modal="true" aria-busy="true">
+    <div class="loader-card">
+      <span class="spinner" aria-hidden="true"></span>
+      <p class="loader-text">{{ isEdit() ? 'Updating production…' : 'Creating production…' }}</p>
+    </div>
+  </div>
+}
+
+<!-- Success modal after a successful save -->
+@if (showSuccess()) {
+  <div class="overlay" (click)="dismissSuccess()">
+    <div class="modal" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+      <div class="modal__icon modal__icon--success"><mat-icon>check_circle</mat-icon></div>
+      <h2 class="modal__title">{{ isEdit() ? 'Production updated' : 'Production created' }}</h2>
+      <p class="modal__message">
+        {{ isEdit()
+          ? 'Your changes have been saved successfully.'
+          : 'The production has been created successfully.' }}
+      </p>
+      <button class="modal__btn" (click)="dismissSuccess()">Done</button>
+    </div>
+  </div>
+}

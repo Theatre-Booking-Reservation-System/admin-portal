@@ -140,6 +140,10 @@
   font-weight: 700;
   font-size: 0.75rem;
 }
+.poster-img {
+  object-fit: cover;
+  background: var(--brand-maroon);
+}
 
 .actions {
   display: flex;

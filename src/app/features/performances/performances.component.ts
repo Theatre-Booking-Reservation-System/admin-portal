@@ -116,7 +116,7 @@ const LANGUAGE_LABEL: Record<string, Performance['language']> = {
 
 /** Map a PerformanceItem (+ its production) to the template's view-model. */
 function toView(pf: PerformanceItem, prod?: ProductionItem): Performance {
-  const title = prod?.titleEn || prod?.titleSi || prod?.titleTa || 'Untitled';
+  const title = prod?.title || 'Untitled';
   const session = pf.sessionType === 'MATINEE' ? 'Matinee' : 'Evening';
   return {
     id: pf.performanceId,

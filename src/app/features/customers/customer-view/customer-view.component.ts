@@ -1,6 +1,23 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { PatronService } from '../../../core/services/patron.service';
+import { PatronSummary } from '../../../core/models/auth.models';
+
+/** View-model the template renders. */
+interface CustomerView {
+  id: string;
+  name: string;
+  abbr: string;
+  email: string;
+  phone: string;
+  nic: string;
+  birthday: string;
+  memberSince: string;
+  verified: boolean;
+  loyaltyMember: boolean;
+  loyaltyCardNo: string;
+}
 
 interface BookingHistory {
   id: string;
@@ -19,40 +36,69 @@ interface BookingHistory {
   styleUrl: './customer-view.component.scss',
 })
 export class CustomerViewComponent {
-  readonly customer = {
-    id: 'c1',
-    name: 'Nimal Perera',
-    email: 'nimal.perera@email.com',
-    phone: '+94 77 123 4567',
-    abbr: 'NP',
-    status: 'Active',
-    memberSince: '12 Jan 2024',
-    // Loyalty
-    loyaltyMember: true,
-    loyaltyCardNo: 'SL-2024-00187',
-    // Stats
-    totalBookings: 12,
-    upcomingBookings: 2,
-    totalSpend: 'LKR 48,000',
-    // Account lock (set after 3 failed login attempts by the Identity Service)
-    failedAttempts: 3,
-  };
+  private readonly route = inject(ActivatedRoute);
+  private readonly patrons = inject(PatronService);
 
-  /** Whether the account is currently locked. */
-  readonly locked = signal(true);
+  private readonly patronId = this.route.snapshot.paramMap.get('id') ?? '';
 
-  unlock(): void {
-    // UI-only: clears the lock. Wires to the Identity Service unlock endpoint later.
-    this.locked.set(false);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly customer = signal<CustomerView | null>(null);
+
+  /** Whether the account is currently locked (Identity status 9). */
+  readonly locked = signal(false);
+  readonly unlocking = signal(false);
+
+  readonly initials = computed(() => this.customer()?.abbr ?? '');
+
+  // Booking history comes from the Booking Service — not wired yet.
+  readonly bookings: BookingHistory[] = [];
+
+  constructor() {
+    this.load();
   }
 
-  readonly bookings: BookingHistory[] = [
-    { id: 'STB2025-001', production: 'Sanda Katha', date: '24 May 2025, 6:30 PM', seats: 'A12, A13', amount: 'LKR 4,000', status: 'Confirmed' },
-    { id: 'STB2025-018', production: 'Dharma Patha', date: '18 Apr 2025, 3:00 PM', seats: 'C10', amount: 'LKR 2,500', status: 'Confirmed' },
-    { id: 'STB2025-042', production: 'The Merchant of Venice', date: '2 Mar 2025, 6:30 PM', seats: 'B5, B6', amount: 'LKR 5,000', status: 'Confirmed' },
-    { id: 'STB2025-061', production: 'Yathra Oruwa', date: '10 Feb 2025, 3:00 PM', seats: 'D2', amount: 'LKR 2,000', status: 'Cancelled' },
-    { id: 'STB2025-088', production: 'Ahas Maliga', date: '5 Jan 2025, 6:30 PM', seats: 'AA1, AA2', amount: 'LKR 5,000', status: 'Confirmed' },
-  ];
+  load(): void {
+    if (!this.patronId) {
+      this.error.set('No customer id provided.');
+      this.loading.set(false);
+      return;
+    }
+    this.loading.set(true);
+    this.error.set(null);
+    this.patrons.getPatron(this.patronId).subscribe({
+      next: (res) => {
+        const p = res.patron;
+        if (!p) {
+          this.error.set('Customer not found.');
+          this.loading.set(false);
+          return;
+        }
+        this.customer.set(toView(p));
+        this.locked.set(p.status === 9);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load this customer. Please try again.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  unlock(): void {
+    if (!this.patronId) return;
+    this.unlocking.set(true);
+    this.patrons.unlockPatron(this.patronId).subscribe({
+      next: () => {
+        this.locked.set(false);
+        this.unlocking.set(false);
+      },
+      error: () => {
+        this.error.set('Could not unlock this account. Please try again.');
+        this.unlocking.set(false);
+      },
+    });
+  }
 
   statusClass(s: string): string {
     switch (s) {
@@ -68,4 +114,36 @@ export class CustomerViewComponent {
         return 'pill--muted';
     }
   }
+}
+
+/** Map an Identity PatronSummary to the view-model. */
+function toView(p: PatronSummary): CustomerView {
+  const name = p.name || 'Unknown';
+  return {
+    id: p.patronId,
+    name,
+    abbr: initials(name),
+    email: p.email || '—',
+    phone: p.contactNo || '—',
+    nic: p.nicPassportNo || '—',
+    birthday: formatDate(p.dateOfBirth),
+    memberSince: formatDate(p.addedDate),
+    verified: !!p.verified,
+    loyaltyMember: !!p.loyaltyHolder,
+    loyaltyCardNo: p.loyaltyCardNo || '—',
+  };
+}
+
+function formatDate(value?: string): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '??';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
