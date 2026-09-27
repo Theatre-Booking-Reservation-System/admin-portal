@@ -21,7 +21,7 @@ interface Production {
   poster: string | null;
 }
 
-type FilterKey = 'All' | 'Now Showing' | 'Inactive' | 'Upcoming' | 'Expired';
+type FilterKey = 'All' | 'Now Showing' | 'Upcoming' | 'Expired';
 
 @Component({
   selector: 'app-productions',
@@ -46,6 +46,12 @@ export class ProductionsComponent {
 
   readonly productions = signal<Production[]>([]);
 
+  // ── Delete confirmation ──────────────────────────────────────────────────
+  /** The production awaiting delete confirmation, or null when the dialog is closed. */
+  readonly deleteTarget = signal<Production | null>(null);
+  readonly deleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
   readonly languages = ['Sinhala', 'Tamil', 'English'];
   readonly categories = ['Drama', 'Musical', 'Comedy', 'Dance', 'Opera', 'Children'];
 
@@ -56,7 +62,6 @@ export class ProductionsComponent {
       { key: 'Now Showing', label: 'Now Showing', count: list.filter((p) => p.status === 'Now Showing').length },
       { key: 'Upcoming', label: 'Upcoming', count: list.filter((p) => p.status === 'Upcoming').length },
       { key: 'Expired', label: 'Expired', count: list.filter((p) => p.status === 'Expired').length },
-      { key: 'Inactive', label: 'Inactive', count: list.filter((p) => p.status === 'Inactive').length },
     ];
   });
 
@@ -121,6 +126,39 @@ export class ProductionsComponent {
     }
   }
 
+  // ── Delete flow ───────────────────────────────────────────────────────────
+
+  /** Open the confirmation dialog for a production. */
+  askDelete(p: Production): void {
+    this.deleteError.set(null);
+    this.deleteTarget.set(p);
+  }
+
+  /** Close the dialog without deleting (ignored while a delete is in flight). */
+  cancelDelete(): void {
+    if (this.deleting()) return;
+    this.deleteTarget.set(null);
+  }
+
+  /** Confirm and DELETE /productions/{id}, then drop the row on success. */
+  confirmDelete(): void {
+    const target = this.deleteTarget();
+    if (!target || this.deleting()) return;
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    this.catalogue.deleteProduction(target.id).subscribe({
+      next: () => {
+        this.productions.update((list) => list.filter((p) => p.id !== target.id));
+        this.deleting.set(false);
+        this.deleteTarget.set(null);
+      },
+      error: () => {
+        this.deleteError.set('Could not delete this production. Please try again.');
+        this.deleting.set(false);
+      },
+    });
+  }
+
   onSearch(value: string) {
     this.search.set(value);
   }
@@ -177,16 +215,18 @@ function posterSrc(value?: string): string | null {
 }
 
 /**
- * Derive the display status from the API's `status` flag and dates:
+ * Derive the display status from the API's `status` flag and dates.
+ * Expired is decided by the end date first: any production whose run has
+ * finished (endDate before today) is Expired, regardless of the status flag.
+ *  - endDate before today         → Expired (its run has finished)
  *  - status !== 1 (e.g. 9)        → Inactive
  *  - releaseDate in the future    → Upcoming
- *  - endDate before today         → Expired (its run has finished)
  *  - otherwise (currently running)→ Now Showing
  */
 function deriveStatus(p: ProductionItem): Production['status'] {
+  if (isPast(p.endDate)) return 'Expired';
   if (p.status !== 1) return 'Inactive';
   if (isFuture(p.releaseDate)) return 'Upcoming';
-  if (isPast(p.endDate)) return 'Expired';
   return 'Now Showing';
 }
 

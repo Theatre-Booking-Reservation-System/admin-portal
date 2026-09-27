@@ -74,7 +74,8 @@ export class ProductionViewComponent {
   readonly tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'cast', label: 'Cast & Crew' },
-    { key: 'performances', label: 'Performances' },
+    // Performances tab hidden for now — not wired to the performances API yet.
+    // { key: 'performances', label: 'Performances' },
     { key: 'pricing', label: 'Ticket Pricing' },
     { key: 'media', label: 'Media' },
   ];
