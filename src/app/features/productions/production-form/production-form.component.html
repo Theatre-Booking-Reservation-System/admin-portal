@@ -29,6 +29,9 @@
   @if (saveError()) {
     <p class="field-error"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
   }
+  @if (loadError()) {
+    <p class="field-error"><mat-icon>error_outline</mat-icon> {{ loadError() }}</p>
+  }
 
   <!-- Basic Information + Poster -->
   <div class="grid-2">
@@ -269,6 +272,16 @@
     }
   </section>
 </form>
+
+<!-- Loading overlay while fetching the production to edit -->
+@if (loading()) {
+  <div class="overlay" role="alertdialog" aria-modal="true" aria-busy="true">
+    <div class="loader-card">
+      <span class="spinner" aria-hidden="true"></span>
+      <p class="loader-text">Loading production…</p>
+    </div>
+  </div>
+}
 
 <!-- Loading overlay while the create/update request is in flight -->
 @if (saving()) {

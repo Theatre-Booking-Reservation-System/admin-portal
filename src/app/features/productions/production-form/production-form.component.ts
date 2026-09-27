@@ -3,7 +3,11 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { CatalogueService } from '../../../core/services/catalogue.service';
-import { ProductionLanguage, ProductionRequest } from '../../../core/models/catalogue.models';
+import {
+  ProductionItem,
+  ProductionLanguage,
+  ProductionRequest,
+} from '../../../core/models/catalogue.models';
 
 @Component({
   selector: 'app-production-form',
@@ -25,6 +29,10 @@ export class ProductionFormComponent {
   readonly saving = signal(false);
   readonly saveError = signal<string | null>(null);
   readonly showSuccess = signal(false);
+
+  /** True while the existing production is being fetched (edit mode). */
+  readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
 
   title = '';
   language = '';
@@ -60,26 +68,47 @@ export class ProductionFormComponent {
   private static readonly ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
   constructor() {
-    if (this.isEdit()) {
-      // Pre-fill with hardcoded sample data for the edit demo.
-      this.title = 'Sanda Katha';
-      this.language = 'Sinhala';
-      this.genre = 'Drama';
-      this.description =
-        'Sanda Katha is a captivating drama that brings together tradition and modern storytelling, performed in Sinhala. A journey of love, heritage and identity.';
-      this.status = 'Active';
-      this.ageRestriction = 'All Ages';
-      this.duration = 120;
-      this.intermission = 15;
-      this.baseTicketCost = 2000;
-      this.startDate = '2025-05-24';
-      this.endDate = '2025-06-06';
-      this.castCrew = [
-        { name: 'Nimal Perera', position: 'Lead Actor' },
-        { name: 'Kavindi Silva', position: 'Director' },
-      ];
-      this.descLength.set(this.description.length);
+    if (this.isEdit() && this.productionId) {
+      this.loadProduction(this.productionId);
     }
+  }
+
+  /** Fetch the production and populate the form fields (edit mode). */
+  private loadProduction(id: string): void {
+    this.loading.set(true);
+    this.loadError.set(null);
+    this.catalogue.getProductionById(id).subscribe({
+      next: (res) => {
+        this.applyProduction(res);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loadError.set('Could not load this production. Please try again.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** Map an API ProductionItem/Response onto the form's fields. */
+  private applyProduction(p: ProductionItem): void {
+    this.title = p.title ?? '';
+    this.language = p.language ? (LANGUAGE_LABEL[p.language] ?? '') : '';
+    this.genre = p.genre ?? '';
+    this.description = p.description ?? '';
+    this.status = p.status === 9 ? 'Inactive' : 'Active';
+    this.ageRestriction = p.ageRestriction ?? '';
+    this.duration = p.duration != null && p.duration !== '' ? Number(p.duration) : null;
+    this.baseTicketCost = p.baseTicketCost ?? null;
+    this.startDate = isoDate(p.releaseDate);
+    this.endDate = isoDate(p.endDate);
+    const crew = (p.castCrew ?? [])
+      .filter((m) => (m.value ?? '').trim() || (m.key ?? '').trim())
+      .map((m) => ({ name: m.value ?? '', position: m.key ?? '' }));
+    this.castCrew = crew.length ? crew : [{ name: '', position: '' }];
+    if (p.posterImageUrl) {
+      this.posterPreview.set(posterSrc(p.posterImageUrl));
+    }
+    this.descLength.set(this.description.length);
   }
 
   onDescInput(value: string) {
@@ -239,4 +268,31 @@ export class ProductionFormComponent {
     this.showSuccess.set(false);
     this.router.navigateByUrl('/productions');
   }
+}
+
+/** API language enum → the select's option label. */
+const LANGUAGE_LABEL: Record<string, string> = {
+  SINHALA: 'Sinhala',
+  TAMIL: 'Tamil',
+  ENGLISH: 'English',
+};
+
+/** Normalise an API date/datetime to "YYYY-MM-DD" for a date input. */
+function isoDate(value?: string): string {
+  if (!value) return '';
+  return value.length > 10 ? value.slice(0, 10) : value;
+}
+
+/**
+ * Normalise posterImageUrl into an <img src>: full data URL, http(s)/relative
+ * URL used as-is; otherwise treated as raw base64 image data.
+ */
+function posterSrc(value?: string): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  if (v.startsWith('data:') || v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/')) {
+    return v;
+  }
+  const mime = v.startsWith('/9j') ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${v}`;
 }
