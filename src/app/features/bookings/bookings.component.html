@@ -1,89 +1,88 @@
 <header class="page-head">
   <div>
     <h1 class="page-title">Bookings</h1>
-    <p class="muted page-head__sub">Pick a production and performance to see its booked seats.</p>
+    <p class="muted page-head__sub">Recent bookings across all patrons. Expand a row to see its seats.</p>
   </div>
+  <button class="btn btn--ghost" (click)="load()" [disabled]="loading()">
+    <mat-icon>refresh</mat-icon> Refresh
+  </button>
 </header>
 
 <section class="card">
-  <!-- Selection row -->
-  <div class="filters">
-    <div class="filter">
-      <label>Production</label>
-      <select
-        class="input"
-        [value]="productionId()"
-        (change)="onProductionChange($any($event.target).value)"
-        [disabled]="productionsLoading()"
-      >
-        <option value="">{{ productionsLoading() ? 'Loading productions…' : 'Select a production' }}</option>
-        @for (p of productions(); track p.id) {
-          <option [value]="p.id">{{ p.title }}</option>
-        }
-      </select>
-    </div>
-
-    <div class="filter">
-      <label>Performance</label>
-      <select
-        class="input"
-        [value]="performanceId()"
-        (change)="onPerformanceChange($any($event.target).value)"
-        [disabled]="!productionId() || performancesLoading()"
-      >
-        <option value="">
-          @if (performancesLoading()) { Loading performances… }
-          @else if (!productionId()) { Select a production first }
-          @else { Select a performance }
-        </option>
-        @for (pf of performances(); track pf.id) {
-          <option [value]="pf.id">{{ pf.label }}</option>
-        }
-      </select>
-    </div>
-
+  <div class="toolbar">
     <div class="search">
       <mat-icon>search</mat-icon>
       <input
         type="text"
-        placeholder="Search seat…"
+        placeholder="Search by reference, customer or show…"
         [value]="search()"
         (input)="onSearch($any($event.target).value)"
-        [disabled]="!performanceId()"
       />
     </div>
-
-    <button class="btn btn--ghost reset" (click)="reset()"><mat-icon>refresh</mat-icon> Reset</button>
   </div>
 
   @if (error()) {
     <p class="err-line"><mat-icon>error_outline</mat-icon> {{ error() }}</p>
   }
 
-  <!-- Booked seats -->
   <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Booked Seat</th>
+          <th>Booking Ref</th>
+          <th>Customer</th>
+          <th>Show</th>
+          <th>Date &amp; Time</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th>Seats</th>
         </tr>
       </thead>
       <tbody>
-        @for (seat of filteredSeats(); track seat; let i = $index) {
+        @for (b of filtered(); track b.ref) {
           <tr>
-            <td class="muted">{{ i + 1 }}</td>
-            <td class="cell-title">{{ seat }}</td>
+            <td class="cell-title">{{ b.ref }}</td>
+            <td>{{ b.customer }}</td>
+            <td>{{ b.show }}</td>
+            <td>{{ b.dateTime }}</td>
+            <td>{{ b.amount }}</td>
+            <td><span class="pill" [class]="b.statusClass">{{ b.statusLabel }}</span></td>
+            <td><span class="pill" [class]="b.paymentClass">{{ b.paymentLabel }}</span></td>
+            <td>
+              <button class="link-btn" (click)="toggleSeats(b)">
+                <mat-icon>{{ b.expanded ? 'expand_less' : 'event_seat' }}</mat-icon>
+                {{ b.expanded ? 'Hide' : 'View' }}
+              </button>
+            </td>
           </tr>
+          @if (b.expanded) {
+            <tr class="seats-row">
+              <td colspan="8">
+                @if (b.seatsLoading) {
+                  <span class="muted"><span class="spinner" aria-hidden="true"></span> Loading seats…</span>
+                } @else if (b.seatsError) {
+                  <span class="err-line"><mat-icon>error_outline</mat-icon> {{ b.seatsError }}</span>
+                } @else if (b.seats && b.seats.length) {
+                  <div class="seats">
+                    <span class="seats__label muted">Selected seats:</span>
+                    @for (s of b.seats; track s) {
+                      <span class="seat-chip">{{ s }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span class="muted">No seat details available for this booking.</span>
+                }
+              </td>
+            </tr>
+          }
         } @empty {
           <tr>
-            <td colspan="2" class="empty">
-              @if (seatsLoading()) {
+            <td colspan="8" class="empty">
+              @if (loading()) {
                 <span class="spinner" aria-hidden="true"></span> Loading bookings…
-              } @else if (!performanceId()) {
-                Select a production and performance to view booked seats.
               } @else {
-                No booked seats for this performance.
+                No bookings found.
               }
             </td>
           </tr>
@@ -92,9 +91,9 @@
     </table>
   </div>
 
-  @if (performanceId() && !seatsLoading()) {
+  @if (!loading()) {
     <div class="table-foot">
-      <span class="muted">{{ filteredSeats().length }} of {{ bookedSeats().length }} booked seats</span>
+      <span class="muted">Showing {{ filtered().length }} of {{ rows().length }} recent bookings</span>
     </div>
   }
 </section>

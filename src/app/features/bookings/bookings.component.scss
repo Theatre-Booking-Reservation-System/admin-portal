@@ -311,3 +311,52 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+// ── Expandable seats row ────────────────────────────────────────────────────
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  color: var(--brand-maroon);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+}
+.link-btn:hover {
+  background: var(--brand-maroon-soft);
+}
+.link-btn mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+.seats-row td {
+  white-space: normal;
+  background: var(--brand-surface-2);
+}
+.seats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.seats__label {
+  font-size: 0.8rem;
+  margin-right: 0.25rem;
+}
+.seat-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand-maroon);
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+}
