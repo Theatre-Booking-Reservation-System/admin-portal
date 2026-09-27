@@ -46,6 +46,11 @@ export class PerformancesComponent {
   readonly productionOptions = signal<{ id: string; title: string }[]>([]);
   private productionsById = new Map<string, ProductionItem>();
 
+  // ── Delete confirmation ──────────────────────────────────────────────────
+  readonly deleteTarget = signal<Performance | null>(null);
+  readonly deleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
   readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
     const list = this.performances();
     return [
@@ -159,6 +164,39 @@ export class PerformancesComponent {
       default:
         return 'pill--muted';
     }
+  }
+
+  // ── Delete flow ───────────────────────────────────────────────────────────
+
+  /** Open the confirmation dialog for a performance. */
+  askDelete(p: Performance): void {
+    this.deleteError.set(null);
+    this.deleteTarget.set(p);
+  }
+
+  /** Close the dialog without deleting (ignored while a delete is in flight). */
+  cancelDelete(): void {
+    if (this.deleting()) return;
+    this.deleteTarget.set(null);
+  }
+
+  /** Confirm and DELETE /performances/{id}, then drop the row on success. */
+  confirmDelete(): void {
+    const target = this.deleteTarget();
+    if (!target || this.deleting()) return;
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    this.catalogue.deletePerformance(target.id).subscribe({
+      next: () => {
+        this.performances.update((list) => list.filter((p) => p.id !== target.id));
+        this.deleting.set(false);
+        this.deleteTarget.set(null);
+      },
+      error: () => {
+        this.deleteError.set('Could not delete this performance. Please try again.');
+        this.deleting.set(false);
+      },
+    });
   }
 
   onSearch(value: string) {

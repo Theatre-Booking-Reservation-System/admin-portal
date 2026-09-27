@@ -2,9 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { forkJoin, of } from 'rxjs';
 import { HolidayService } from '../../../core/services/holiday.service';
 import { CatalogueService } from '../../../core/services/catalogue.service';
-import { PerformanceRequest, SessionType } from '../../../core/models/catalogue.models';
+import {
+  PerformanceRequest,
+  PerformanceResponse,
+  SessionType,
+} from '../../../core/models/catalogue.models';
 
 /** Minimal shape the production dropdown needs. */
 interface ProductionOption {
@@ -34,6 +39,10 @@ export class PerformanceFormComponent {
   readonly saving = signal(false);
   readonly saveError = signal<string | null>(null);
   readonly showSuccess = signal(false);
+
+  /** True while fetching the existing performance (edit mode). */
+  readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
 
   /** Selected production id (signal so the date range can react to it). */
   readonly production = signal('');
@@ -76,24 +85,22 @@ export class PerformanceFormComponent {
   constructor() {
     // Load poya days (from catalogue API, with a built-in fallback).
     this.holidays.load();
-    this.loadProductions();
 
-    if (this.isEdit()) {
-      this.date = '2025-05-24';
-      this.time = '18:30';
-      this.sessionType = 'Evening';
-      this.validateDate(this.date);
-    }
-  }
-
-  /** Load the productions for the dropdown from the catalogue API. */
-  private loadProductions(): void {
+    // Load productions for the dropdown, and (edit mode) the performance too.
+    // Fetching together means the run-window is known when we set the fields.
     this.productionsLoading.set(true);
-    this.productionsError.set(null);
-    this.catalogue.getAllProductions().subscribe({
-      next: (res) => {
+    if (this.isEdit()) this.loading.set(true);
+
+    forkJoin({
+      productions: this.catalogue.getAllProductions(),
+      performance:
+        this.isEdit() && this.performanceId
+          ? this.catalogue.getPerformanceById(this.performanceId)
+          : of(null),
+    }).subscribe({
+      next: ({ productions, performance }) => {
         this.productions.set(
-          (res.productions ?? []).map((p) => ({
+          (productions.productions ?? []).map((p) => ({
             id: p.productionId,
             title: p.title || 'Untitled',
             releaseDate: isoDate(p.releaseDate),
@@ -101,12 +108,30 @@ export class PerformanceFormComponent {
           })),
         );
         this.productionsLoading.set(false);
+
+        if (performance) {
+          this.applyPerformance(performance);
+        }
+        this.loading.set(false);
       },
       error: () => {
         this.productionsError.set('Could not load productions.');
         this.productionsLoading.set(false);
+        if (this.isEdit()) {
+          this.loadError.set('Could not load this performance. Please try again.');
+        }
+        this.loading.set(false);
       },
     });
+  }
+
+  /** Populate the form fields from an API performance (edit mode). */
+  private applyPerformance(p: PerformanceResponse): void {
+    this.production.set(p.productionId ?? '');
+    this.date = isoDate(p.date);
+    this.time = normalizeTime(p.time);
+    this.sessionType = p.sessionType === 'MATINEE' ? 'Matinee' : p.sessionType === 'EVENING' ? 'Evening' : '';
+    if (this.date) this.validateDate(this.date);
   }
 
   /** Called when the production changes; re-checks the date against the new range. */
@@ -211,4 +236,12 @@ export class PerformanceFormComponent {
 function isoDate(value?: string): string {
   if (!value) return '';
   return value.length > 10 ? value.slice(0, 10) : value;
+}
+
+/** Normalise an API time ("HH:mm:ss" / "HH:mm") to "HH:mm" for a time input. */
+function normalizeTime(value?: string): string {
+  if (!value) return '';
+  const m = /^(\d{1,2}):(\d{2})/.exec(value.trim());
+  if (!m) return value;
+  return `${m[1].padStart(2, '0')}:${m[2]}`;
 }

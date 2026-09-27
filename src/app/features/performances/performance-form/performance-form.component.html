@@ -31,6 +31,9 @@
   @if (saveError()) {
     <p class="err err--block"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
   }
+  @if (loadError()) {
+    <p class="err err--block"><mat-icon>error_outline</mat-icon> {{ loadError() }}</p>
+  }
 
   <section class="card">
     <h2 class="card-title">Schedule</h2>
@@ -104,6 +107,16 @@
     }
   </section>
 </form>
+
+<!-- Loading overlay while fetching the performance to edit -->
+@if (loading()) {
+  <div class="overlay" role="alertdialog" aria-modal="true" aria-busy="true">
+    <div class="loader-card">
+      <span class="spinner" aria-hidden="true"></span>
+      <p class="loader-text">Loading performance…</p>
+    </div>
+  </div>
+}
 
 <!-- Loading overlay while the create/update request is in flight -->
 @if (saving()) {
