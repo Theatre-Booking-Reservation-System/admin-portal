@@ -93,3 +93,45 @@ export interface PerformanceBookedSeatsResponse {
   bookedSeatIds?: string[];
   bookedSeatRefs?: string[];
 }
+
+// ── Admin dashboard aggregates ───────────────────────────────────────────────
+
+/** One point in the per-month booking overview chart. */
+export interface MonthlyBookingPoint {
+  month?: string;
+  label?: string;
+  bookings?: number;
+  revenue?: number;
+}
+
+/** GET /bookings/summary — aggregate totals + per-month overview. */
+export interface BookingSummaryResponse {
+  statusCode: string;
+  statusDescription: string;
+  totalBookings?: number;
+  totalRevenue?: number;
+  bookingOverview?: MonthlyBookingPoint[];
+}
+
+/** A row in the recent-bookings dashboard list. */
+export interface RecentBookingItem {
+  bookingId?: string;
+  bookingRef?: string;
+  patronId?: string;
+  customerName?: string;
+  performanceId?: string;
+  showName?: string;
+  performanceDate?: string;
+  performanceTime?: string;
+  totalLkr?: number;
+  status?: BookingStatus;
+  paymentStatus?: PaymentStatus;
+  createdAt?: string;
+}
+
+/** GET /bookings/recent — recent bookings across all patrons. */
+export interface RecentBookingsResponse {
+  statusCode: string;
+  statusDescription: string;
+  bookings?: RecentBookingItem[];
+}

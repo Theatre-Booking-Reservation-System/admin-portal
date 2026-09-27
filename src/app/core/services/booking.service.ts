@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   BookingListResponse,
   BookingRequest,
   BookingResponse,
+  BookingSummaryResponse,
   PerformanceBookedSeatsResponse,
+  RecentBookingsResponse,
 } from '../models/booking.models';
 
 /**
@@ -46,5 +48,18 @@ export class BookingService {
     return this.http.get<PerformanceBookedSeatsResponse>(
       `${this.baseUrl}/performances/${performanceId}/bookings`,
     );
+  }
+
+  // ── Admin dashboard aggregates ─────────────────────────────────────────────
+
+  /** Recent bookings across all patrons (dashboard). Defaults to 5 rows. */
+  getRecentBookings(limit?: number): Observable<RecentBookingsResponse> {
+    const params = limit != null ? new HttpParams().set('limit', String(limit)) : undefined;
+    return this.http.get<RecentBookingsResponse>(`${this.baseUrl}/bookings/recent`, { params });
+  }
+
+  /** Aggregate booking totals + per-month overview (dashboard). */
+  getBookingSummary(): Observable<BookingSummaryResponse> {
+    return this.http.get<BookingSummaryResponse>(`${this.baseUrl}/bookings/summary`);
   }
 }
