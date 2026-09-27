@@ -1,13 +1,20 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, tap, throwError } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 import { AuthService } from '../services/auth.service';
 import { ConnectionService } from '../services/connection.service';
 
 /** Backend uses HTTP 440 to signal an expired session (force re-login). */
 const SESSION_EXPIRED = 440;
+
+/**
+ * Status code the backend returns when the session/token is no longer valid.
+ * It can arrive either as an HTTP error or embedded in an otherwise-OK body,
+ * so we check both paths and force a logout.
+ */
+const AUTH_REQUIRED_CODE = 'ATH_04';
 
 /**
  * Statuses that mean "we couldn't reach a working backend": a network/CORS
@@ -27,12 +34,31 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const connection = inject(ConnectionService);
   const router = inject(Router);
 
+  /** Sign the user out and send them to /login. */
+  const forceLogout = () => {
+    auth.logout();
+    router.navigateByUrl('/login');
+  };
+
   return next(req).pipe(
+    // Some backends return the auth error inside a 200 OK body — catch that too.
+    tap((event) => {
+      if (event instanceof HttpResponse) {
+        const code = (event.body as { statusCode?: string } | null)?.statusCode;
+        if (code === AUTH_REQUIRED_CODE) {
+          forceLogout();
+        }
+      }
+    }),
     catchError((err: HttpErrorResponse) => {
+      if (err.error?.statusCode === AUTH_REQUIRED_CODE) {
+        // "Authentication required" → force re-login from any screen.
+        forceLogout();
+        return throwError(() => err);
+      }
       if (err.status === SESSION_EXPIRED) {
         // 440 → session expired: sign out and go to /login from any screen.
-        auth.logout();
-        router.navigateByUrl('/login');
+        forceLogout();
       } else if (CONNECTION_ERRORS.has(err.status)) {
         // Backend/network unavailable → full connection-error page with retry.
         connection.markOffline(router.url);
@@ -43,6 +69,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           title: titleFor(err.status),
           message: messageFor(err),
           code: err.error?.statusCode,
+          status: err.status,
         });
       }
 

@@ -8,7 +8,7 @@
 <section class="card">
   <div class="toolbar">
     <div class="tabs">
-      @for (t of filters; track t.key) {
+      @for (t of filters(); track t.key) {
         <button class="tab" [class.tab--active]="filter() === t.key" (click)="filter.set(t.key)">
           {{ t.label }} ({{ t.count }})
         </button>
@@ -77,14 +77,24 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="9" class="empty">No customers found.</td></tr>
+          <tr>
+            <td colspan="9" class="empty">
+              @if (loading()) {
+                Loading customers…
+              } @else if (error()) {
+                {{ error() }}
+              } @else {
+                No customers found.
+              }
+            </td>
+          </tr>
         }
       </tbody>
     </table>
   </div>
 
   <div class="table-foot">
-    <span class="muted">Showing 1–{{ filtered().length }} of {{ customers.length }} customers</span>
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ customers().length }} customers</span>
     <div class="pager">
       <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
       <button class="pager__btn pager__btn--active">1</button>

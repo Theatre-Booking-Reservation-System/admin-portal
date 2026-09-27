@@ -9,18 +9,23 @@ export type SessionType = 'MATINEE' | 'EVENING';
 /** status: 1 = Active, 9 = Inactive/Archived. */
 export type CatalogueStatus = number;
 
+/** A single cast/crew entry, e.g. { key: 'Director', value: 'Jane Doe' }. */
+export interface CastCrewMember {
+  key?: string;
+  value?: string;
+}
+
 // ── Productions ──────────────────────────────────────────────────────────────
 
 export interface ProductionRequest {
-  titleEn?: string;
-  titleSi?: string;
-  titleTa?: string;
+  title?: string;
   language?: ProductionLanguage;
   genre?: string;
-  descriptionEn?: string;
-  descriptionSi?: string;
-  descriptionTa?: string;
+  description?: string;
   baseTicketCost?: number;
+  duration?: string;
+  ageRestriction?: string;
+  castCrew?: CastCrewMember[];
   releaseDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
   posterImageUrl?: string;
@@ -29,15 +34,14 @@ export interface ProductionRequest {
 
 export interface ProductionItem {
   productionId: string;
-  titleEn?: string;
-  titleSi?: string;
-  titleTa?: string;
+  title?: string;
   language?: ProductionLanguage;
   genre?: string;
-  descriptionEn?: string;
-  descriptionSi?: string;
-  descriptionTa?: string;
+  description?: string;
   baseTicketCost?: number;
+  duration?: string;
+  ageRestriction?: string;
+  castCrew?: CastCrewMember[];
   releaseDate?: string;
   endDate?: string;
   posterImageUrl?: string;
@@ -81,9 +85,6 @@ export interface PerformanceRequest {
   date?: string; // YYYY-MM-DD
   time?: string; // HH:mm[:ss]
   sessionType?: SessionType;
-  releaseDate?: string;
-  earlyAccessOpensAt?: string;
-  isEarlyAccessActive?: boolean;
   status?: CatalogueStatus;
 }
 
@@ -93,9 +94,6 @@ export interface PerformanceItem {
   date?: string;
   time?: string;
   sessionType?: SessionType;
-  releaseDate?: string;
-  earlyAccessOpensAt?: string;
-  isEarlyAccessActive?: boolean;
   status?: CatalogueStatus;
 }
 
@@ -123,9 +121,12 @@ export interface PerformanceSearchResponse {
 // ── Query params ─────────────────────────────────────────────────────────────
 
 export interface ProductionSearchParams {
-  q?: string;
+  title?: string;
   status?: CatalogueStatus;
-  upcoming?: boolean;
+  genre?: string;
+  language?: ProductionLanguage;
+  releaseDate?: string; // on or after (YYYY-MM-DD)
+  endDate?: string; // on or before (YYYY-MM-DD)
   page?: number;
   size?: number;
   sort?: string; // e.g. "releaseDate,desc"

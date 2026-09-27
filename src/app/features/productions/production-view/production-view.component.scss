@@ -373,3 +373,100 @@
 .base-price__input:focus {
   border-color: var(--brand-maroon);
 }
+
+// ── Poster image + loading state ────────────────────────────────────────────
+.poster-lg--img {
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem;
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid var(--brand-border);
+  border-top-color: var(--brand-maroon);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Seat-zone map ───────────────────────────────────────────────────────────
+.seatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--brand-surface-2);
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+.seatmap__stage {
+  align-self: center;
+  min-width: 60%;
+  text-align: center;
+  padding: 0.5rem 1.5rem;
+  border-radius: 999px 999px 8px 8px;
+  background: linear-gradient(160deg, var(--brand-maroon), var(--brand-maroon-dark));
+  color: var(--brand-gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.seatmap__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.seatmap__section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--brand-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.seatmap__zones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.seatmap__zone {
+  flex: 1 1 120px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: #fff;
+  text-align: center;
+}
+.seatmap__zone-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.seatmap__zone-price {
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+// Section colour bands (nearest = warmest / most expensive)
+.seatmap__zone--stalls {
+  background: var(--brand-maroon);
+}
+.seatmap__zone--circle {
+  background: #6b4bd6;
+}
+.seatmap__zone--upper_circle {
+  background: #2a7de1;
+}

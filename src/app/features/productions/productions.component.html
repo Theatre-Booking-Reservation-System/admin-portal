@@ -94,7 +94,7 @@
           <th>Title</th>
           <th>Language</th>
           <th>Genre</th>
-          <th>Start Date</th>
+          <th>Release Date</th>
           <th>End Date</th>
           <th>Status</th>
           <th>Actions</th>
@@ -103,7 +103,13 @@
       <tbody>
         @for (p of filtered(); track p.id) {
           <tr>
-            <td><span class="poster">{{ p.abbr }}</span></td>
+            <td>
+              @if (p.poster) {
+                <img class="poster poster-img" [src]="p.poster" [alt]="p.title + ' poster'" />
+              } @else {
+                <span class="poster">{{ p.abbr }}</span>
+              }
+            </td>
             <td class="cell-title">{{ p.title }}</td>
             <td>{{ p.language }}</td>
             <td>{{ p.genre }}</td>
@@ -112,15 +118,24 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
+                   <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
                 <a class="icon-btn" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
-                <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
-                <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+             
+                <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="askDelete(p)"><mat-icon>delete</mat-icon></button>
               </div>
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="8" class="empty">No productions found.</td>
+            <td colspan="8" class="empty">
+              @if (loading()) {
+                <span class="spinner" aria-hidden="true"></span> Loading productions…
+              } @else if (error()) {
+                {{ error() }}
+              } @else {
+                No productions found.
+              }
+            </td>
           </tr>
         }
       </tbody>
@@ -137,3 +152,25 @@
     </div>
   </div>
 </section>
+
+<!-- Delete confirmation -->
+@if (deleteTarget(); as target) {
+  <div class="overlay" (click)="cancelDelete()">
+    <div class="modal" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+      <div class="modal__icon modal__icon--danger"><mat-icon>delete</mat-icon></div>
+      <h2 class="modal__title">Delete production?</h2>
+      <p class="modal__message">
+        This will permanently delete <strong>{{ target.title }}</strong>. This action cannot be undone.
+      </p>
+      @if (deleteError()) {
+        <p class="field-error"><mat-icon>error_outline</mat-icon> {{ deleteError() }}</p>
+      }
+      <div class="modal__actions">
+        <button class="btn btn--ghost" (click)="cancelDelete()" [disabled]="deleting()">Cancel</button>
+        <button class="btn btn--danger" (click)="confirmDelete()" [disabled]="deleting()">
+          {{ deleting() ? 'Deleting…' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

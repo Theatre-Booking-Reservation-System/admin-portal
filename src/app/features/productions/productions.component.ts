@@ -15,11 +15,13 @@ interface Production {
   /** Raw ISO "YYYY-MM-DD" dates kept for range filtering. */
   releaseIso: string;
   endIso: string;
-  status: 'Active' | 'Inactive' | 'Upcoming';
+  status: 'Now Showing' | 'Inactive' | 'Upcoming' | 'Expired';
   abbr: string;
+  /** Ready-to-use <img src>, or null to fall back to initials. */
+  poster: string | null;
 }
 
-type FilterKey = 'All' | 'Active' | 'Inactive' | 'Upcoming';
+type FilterKey = 'All' | 'Now Showing' | 'Upcoming' | 'Expired';
 
 @Component({
   selector: 'app-productions',
@@ -44,6 +46,12 @@ export class ProductionsComponent {
 
   readonly productions = signal<Production[]>([]);
 
+  // ── Delete confirmation ──────────────────────────────────────────────────
+  /** The production awaiting delete confirmation, or null when the dialog is closed. */
+  readonly deleteTarget = signal<Production | null>(null);
+  readonly deleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
   readonly languages = ['Sinhala', 'Tamil', 'English'];
   readonly categories = ['Drama', 'Musical', 'Comedy', 'Dance', 'Opera', 'Children'];
 
@@ -51,9 +59,9 @@ export class ProductionsComponent {
     const list = this.productions();
     return [
       { key: 'All', label: 'All', count: list.length },
-      { key: 'Active', label: 'Active', count: list.filter((p) => p.status === 'Active').length },
-      { key: 'Inactive', label: 'Inactive', count: list.filter((p) => p.status === 'Inactive').length },
+      { key: 'Now Showing', label: 'Now Showing', count: list.filter((p) => p.status === 'Now Showing').length },
       { key: 'Upcoming', label: 'Upcoming', count: list.filter((p) => p.status === 'Upcoming').length },
+      { key: 'Expired', label: 'Expired', count: list.filter((p) => p.status === 'Expired').length },
     ];
   });
 
@@ -105,15 +113,50 @@ export class ProductionsComponent {
 
   statusClass(s: Production['status']): string {
     switch (s) {
-      case 'Active':
+      case 'Now Showing':
         return 'pill--success';
-      case 'Inactive':
-        return 'pill--muted';
       case 'Upcoming':
         return 'pill--warning';
-      default:
+      case 'Expired':
         return 'pill--info';
+      case 'Inactive':
+        return 'pill--muted';
+      default:
+        return 'pill--muted';
     }
+  }
+
+  // ── Delete flow ───────────────────────────────────────────────────────────
+
+  /** Open the confirmation dialog for a production. */
+  askDelete(p: Production): void {
+    this.deleteError.set(null);
+    this.deleteTarget.set(p);
+  }
+
+  /** Close the dialog without deleting (ignored while a delete is in flight). */
+  cancelDelete(): void {
+    if (this.deleting()) return;
+    this.deleteTarget.set(null);
+  }
+
+  /** Confirm and DELETE /productions/{id}, then drop the row on success. */
+  confirmDelete(): void {
+    const target = this.deleteTarget();
+    if (!target || this.deleting()) return;
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    this.catalogue.deleteProduction(target.id).subscribe({
+      next: () => {
+        this.productions.update((list) => list.filter((p) => p.id !== target.id));
+        this.deleting.set(false);
+        this.deleteTarget.set(null);
+      },
+      error: () => {
+        this.deleteError.set('Could not delete this production. Please try again.');
+        this.deleting.set(false);
+      },
+    });
   }
 
   onSearch(value: string) {
@@ -138,7 +181,7 @@ const LANGUAGE_LABEL: Record<string, Production['language']> = {
 
 /** Map a catalogue ProductionItem to the template's view-model. */
 function toView(p: ProductionItem): Production {
-  const title = p.titleEn || p.titleSi || p.titleTa || 'Untitled';
+  const title = p.title || 'Untitled';
   return {
     id: p.productionId,
     title,
@@ -150,23 +193,77 @@ function toView(p: ProductionItem): Production {
     endIso: isoDate(p.endDate),
     status: deriveStatus(p),
     abbr: initials(title),
+    poster: posterSrc(p.posterImageUrl),
   };
 }
 
-/** status: 1 = Active, 9 = Inactive/Archived; future release date = Upcoming. */
-function deriveStatus(p: ProductionItem): Production['status'] {
-  if (p.status === 9) return 'Inactive';
-  if (isFuture(p.releaseDate)) return 'Upcoming';
-  return 'Active';
+/**
+ * Normalise the API's posterImageUrl into an <img src>.
+ * Accepts a full data URL, a raw base64 string, or a normal http(s) URL.
+ * Returns null when there's nothing usable so the UI falls back to initials.
+ */
+function posterSrc(value?: string): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  // Already a data URL or an absolute/relative URL — use as-is.
+  if (v.startsWith('data:') || v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/')) {
+    return v;
+  }
+  // Otherwise treat it as raw base64 image data. JPEG data starts with "/9j".
+  const mime = v.startsWith('/9j') ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${v}`;
 }
 
+/**
+ * Derive the display status from the API's `status` flag and dates.
+ * Expired is decided by the end date first: any production whose run has
+ * finished (endDate before today) is Expired, regardless of the status flag.
+ *  - endDate before today         → Expired (its run has finished)
+ *  - status !== 1 (e.g. 9)        → Inactive
+ *  - releaseDate in the future    → Upcoming
+ *  - otherwise (currently running)→ Now Showing
+ */
+function deriveStatus(p: ProductionItem): Production['status'] {
+  if (isPast(p.endDate)) return 'Expired';
+  if (p.status !== 1) return 'Inactive';
+  if (isFuture(p.releaseDate)) return 'Upcoming';
+  return 'Now Showing';
+}
+
+/** True when the date is strictly after today (start of day). */
 function isFuture(dateStr?: string): boolean {
-  if (!dateStr) return false;
+  const t = startOfDay(dateStr);
+  if (t === null) return false;
+  return t > todayStart();
+}
+
+/** True when the date is strictly before today (i.e. yesterday or earlier). */
+function isPast(dateStr?: string): boolean {
+  const t = startOfDay(dateStr);
+  if (t === null) return false;
+  return t < todayStart();
+}
+
+function startOfDay(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  // Parse a "YYYY-MM-DD" (optionally with a time part) as a LOCAL date.
+  // Using `new Date('2026-09-27')` would parse as UTC midnight, which can
+  // shift the day across timezones and misclassify a "today" release.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (m) {
+    const [, y, mo, day] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(day)).getTime();
+  }
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return false;
+  if (isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function todayStart(): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return d.getTime() > today.getTime();
+  return today.getTime();
 }
 
 function formatDate(dateStr?: string): string {

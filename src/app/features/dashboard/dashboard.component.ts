@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { forkJoin } from 'rxjs';
+import { CatalogueService } from '../../core/services/catalogue.service';
+import { PerformanceItem, ProductionItem } from '../../core/models/catalogue.models';
 
 interface StatCard {
   label: string;
@@ -14,7 +18,6 @@ interface TodayShow {
   title: string;
   time: string;
   session: 'Matinee' | 'Evening';
-  seats: string;
   abbr: string;
 }
 
@@ -27,12 +30,6 @@ interface RecentBooking {
   status: 'Confirmed' | 'Pending' | 'Cancelled';
 }
 
-interface QuickAction {
-  title: string;
-  subtitle: string;
-  icon: string;
-}
-
 interface ChartPoint {
   label: string;
   bookings: number; // 0..1 (bar height fraction)
@@ -42,12 +39,20 @@ interface ChartPoint {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatIconModule],
+  imports: [MatIconModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
-  readonly today = 'Mon, 15 Sep 2025';
+  private readonly catalogue = inject(CatalogueService);
+
+  private readonly now = new Date();
+  readonly today = this.now.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   readonly stats: StatCard[] = [
     { label: 'Total Bookings', value: '287', delta: '12% from last week', deltaUp: true, icon: 'confirmation_number' },
@@ -56,11 +61,42 @@ export class DashboardComponent {
     { label: 'Active Productions', value: '6', note: '2 upcoming', icon: 'theaters' },
   ];
 
-  readonly todayShows: TodayShow[] = [
-    { title: 'Sanda Katha', time: 'Matinee | 10:00 AM', session: 'Matinee', seats: '76 / 200 seats sold', abbr: 'SK' },
-    { title: 'Dharma Patha', time: 'Evening | 6:30 PM', session: 'Evening', seats: '112 / 200 seats sold', abbr: 'DP' },
-    { title: 'The Merchant of Venice', time: 'Evening | 6:30 PM', session: 'Evening', seats: '158 / 200 seats sold', abbr: 'MV' },
-  ];
+  // Today's shows from /performances/search (dateFrom=dateTo=today).
+  readonly todayShows = signal<TodayShow[]>([]);
+  readonly todayShowsLoading = signal(true);
+  readonly todayShowsError = signal<string | null>(null);
+
+  constructor() {
+    this.loadTodayShows();
+  }
+
+  private loadTodayShows(): void {
+    const iso = localIso(this.now);
+    this.todayShowsLoading.set(true);
+    this.todayShowsError.set(null);
+    forkJoin({
+      productions: this.catalogue.searchProductions({ size: 200 }),
+      performances: this.catalogue.searchPerformances({
+        dateFrom: iso,
+        dateTo: iso,
+        sort: 'time,asc',
+        size: 100,
+      }),
+    }).subscribe({
+      next: ({ productions, performances }) => {
+        const byId = new Map<string, ProductionItem>();
+        for (const p of productions.content ?? []) byId.set(p.productionId, p);
+        this.todayShows.set(
+          (performances.content ?? []).map((pf) => showToView(pf, byId.get(pf.productionId))),
+        );
+        this.todayShowsLoading.set(false);
+      },
+      error: () => {
+        this.todayShowsError.set('Could not load today\u2019s shows.');
+        this.todayShowsLoading.set(false);
+      },
+    });
+  }
 
   readonly recentBookings: RecentBooking[] = [
     { id: 'ST250915-001', customer: 'Nimal Perera', show: 'Sanda Katha', dateTime: '15 Sep, 10:00 AM', amount: 'LKR 2,700', status: 'Confirmed' },
@@ -68,13 +104,6 @@ export class DashboardComponent {
     { id: 'ST250915-003', customer: 'Tharaka J.', show: 'The Merchant of Venice', dateTime: '16 Sep, 6:30 PM', amount: 'LKR 3,000', status: 'Confirmed' },
     { id: 'ST250915-004', customer: 'Sanduni Silva', show: 'Ahas Maliga', dateTime: '16 Sep, 10:00 AM', amount: 'LKR 2,500', status: 'Cancelled' },
     { id: 'ST250915-005', customer: 'Mohamed Nizar', show: 'Maanavan', dateTime: '17 Sep, 6:30 PM', amount: 'LKR 3,500', status: 'Confirmed' },
-  ];
-
-  readonly quickActions: QuickAction[] = [
-    { title: 'Add Production', subtitle: 'Create new show', icon: 'add_circle' },
-    { title: 'Manage Performances', subtitle: 'View and update', icon: 'event' },
-    { title: 'Customer Management', subtitle: 'Manage users', icon: 'group' },
-    { title: 'View Reports', subtitle: 'Sales and analytics', icon: 'bar_chart' },
   ];
 
   readonly chart: ChartPoint[] = [
@@ -103,4 +132,44 @@ export class DashboardComponent {
   statusClass(s: RecentBooking['status']): string {
     return s === 'Confirmed' ? 'pill--success' : s === 'Pending' ? 'pill--warning' : 'pill--danger';
   }
+}
+
+/** Local "YYYY-MM-DD" for a Date (avoids UTC shift from toISOString). */
+function localIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Map a performance (+ its production) to a Today's Shows row. */
+function showToView(pf: PerformanceItem, prod?: ProductionItem): TodayShow {
+  const title = prod?.title || 'Untitled';
+  const session: TodayShow['session'] = pf.sessionType === 'MATINEE' ? 'Matinee' : 'Evening';
+  const time = formatTime(pf.time);
+  return {
+    title,
+    session,
+    time: time ? `${session} | ${time}` : session,
+    abbr: initials(title),
+  };
+}
+
+/** "18:30:00" / "18:30" -> "6:30 PM". */
+function formatTime(time?: string): string {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  const hour = Number(h);
+  const min = Number(m ?? 0);
+  if (isNaN(hour)) return '';
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:${String(min).padStart(2, '0')} ${period}`;
+}
+
+function initials(title: string): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '??';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
