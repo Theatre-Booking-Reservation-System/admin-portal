@@ -36,7 +36,15 @@ export class PerformancesComponent {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
+  // Server-side filters passed to /performances/search.
+  readonly productionFilter = signal(''); // productionId, '' = all
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
+
   readonly performances = signal<Performance[]>([]);
+  /** Productions for the filter dropdown + title/language lookup. */
+  readonly productionOptions = signal<{ id: string; title: string }[]>([]);
+  private productionsById = new Map<string, ProductionItem>();
 
   readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
     const list = this.performances();
@@ -69,18 +77,21 @@ export class PerformancesComponent {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
-    // Load productions (for titles/language) and all performances together.
+    // Load productions (for titles/language + the filter dropdown) via
+    // /productions/search, and the performances via /performances/search.
     forkJoin({
-      productions: this.catalogue.getAllProductions(),
-      performances: this.catalogue.searchPerformances({ size: 200, sort: 'date,asc' }),
+      productions: this.catalogue.searchProductions({ size: 200, sort: 'releaseDate,asc' }),
+      performances: this.catalogue.searchPerformances(this.buildParams()),
     }).subscribe({
       next: ({ productions, performances }) => {
-        const byId = new Map<string, ProductionItem>();
-        for (const prod of productions.productions ?? []) {
-          byId.set(prod.productionId, prod);
+        this.productionsById = new Map<string, ProductionItem>();
+        for (const prod of productions.content ?? []) {
+          this.productionsById.set(prod.productionId, prod);
         }
-        const items = performances.content ?? [];
-        this.performances.set(items.map((pf) => toView(pf, byId.get(pf.productionId))));
+        this.productionOptions.set(
+          (productions.content ?? []).map((p) => ({ id: p.productionId, title: p.title || 'Untitled' })),
+        );
+        this.setRows(performances.content ?? []);
         this.loading.set(false);
       },
       error: () => {
@@ -88,6 +99,53 @@ export class PerformancesComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  /** Re-run only the performance search (filters changed); productions are cached. */
+  searchPerformances(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.catalogue.searchPerformances(this.buildParams()).subscribe({
+      next: (res) => {
+        this.setRows(res.content ?? []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load performances. Please try again.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** Build the /performances/search query from the active server-side filters. */
+  private buildParams() {
+    return {
+      productionId: this.productionFilter() || undefined,
+      dateFrom: this.dateFrom() || undefined,
+      dateTo: this.dateTo() || undefined,
+      size: 200,
+      sort: 'date,asc',
+    };
+  }
+
+  private setRows(items: PerformanceItem[]): void {
+    this.performances.set(items.map((pf) => toView(pf, this.productionsById.get(pf.productionId))));
+  }
+
+  // Filter change handlers — each re-queries /performances/search.
+  onProductionFilter(id: string): void {
+    this.productionFilter.set(id);
+    this.searchPerformances();
+  }
+
+  onDateFrom(value: string): void {
+    this.dateFrom.set(value);
+    this.searchPerformances();
+  }
+
+  onDateTo(value: string): void {
+    this.dateTo.set(value);
+    this.searchPerformances();
   }
 
   statusClass(s: Performance['status']): string {
@@ -123,7 +181,8 @@ function toView(pf: PerformanceItem, prod?: ProductionItem): Performance {
     date: formatDate(pf.date),
     time: formatTime(pf.time),
     production: title,
-    showTitle: `${title} — ${session}`,
+    // "Show Title" column shows the session type (Matinee / Evening).
+    showTitle: session,
     venue: 'Main Theatre',
     language: (prod?.language && LANGUAGE_LABEL[prod.language]) || '—',
     status: deriveStatus(pf),
@@ -132,25 +191,51 @@ function toView(pf: PerformanceItem, prod?: ProductionItem): Performance {
   };
 }
 
-/** status 9 = Cancelled/Inactive; past date = Completed; future = Upcoming. */
+/**
+ * status 9 = Cancelled/Inactive. Otherwise use the full date+time:
+ *  - date+time already passed → Completed
+ *  - same day, not yet passed  → Active (showing today)
+ *  - future                    → Upcoming
+ */
 function deriveStatus(pf: PerformanceItem): Performance['status'] {
   if (pf.status === 9) return 'Cancelled';
-  const cmp = compareToToday(pf.date);
-  if (cmp === null) return 'Upcoming';
-  if (cmp < 0) return 'Completed';
-  if (cmp === 0) return 'Active';
+  const when = combineDateTime(pf.date, pf.time);
+  if (when === null) return 'Upcoming';
+  const now = Date.now();
+  if (when.getTime() <= now) return 'Completed';
+  if (isSameDay(when, new Date())) return 'Active';
   return 'Upcoming';
 }
 
-/** -1 past, 0 today, 1 future, null unknown. */
-function compareToToday(dateStr?: string): number | null {
+/** Build a local Date from a "YYYY-MM-DD" date and an "HH:mm[:ss]" time. */
+function combineDateTime(dateStr?: string, timeStr?: string): Date | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  d.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.sign(d.getTime() - today.getTime());
+  const dm = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (!dm) {
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  }
+  const [, y, mo, day] = dm;
+  let hours = 23;
+  let minutes = 59;
+  let seconds = 59;
+  if (timeStr) {
+    const tm = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(timeStr.trim());
+    if (tm) {
+      hours = Number(tm[1]);
+      minutes = Number(tm[2]);
+      seconds = tm[3] ? Number(tm[3]) : 0;
+    }
+  }
+  return new Date(Number(y), Number(mo) - 1, Number(day), hours, minutes, seconds);
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 function formatDate(dateStr?: string): string {

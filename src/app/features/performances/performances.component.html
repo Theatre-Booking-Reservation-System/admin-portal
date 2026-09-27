@@ -19,8 +19,36 @@
     </div>
 
     <div class="toolbar__right">
-      <div class="select-chip"><mat-icon>filter_list</mat-icon> All Productions</div>
-      <div class="select-chip"><mat-icon>calendar_today</mat-icon> Select date range</div>
+      <div class="select-chip">
+        <mat-icon>filter_list</mat-icon>
+        <select
+          [value]="productionFilter()"
+          (change)="onProductionFilter($any($event.target).value)"
+          aria-label="Filter by production"
+        >
+          <option value="">All Productions</option>
+          @for (p of productionOptions(); track p.id) {
+            <option [value]="p.id">{{ p.title }}</option>
+          }
+        </select>
+      </div>
+      <div class="select-chip">
+        <mat-icon>calendar_today</mat-icon>
+        <input
+          type="date"
+          [value]="dateFrom()"
+          (change)="onDateFrom($any($event.target).value)"
+          aria-label="From date"
+        />
+        <span class="select-chip__sep">–</span>
+        <input
+          type="date"
+          [value]="dateTo()"
+          [min]="dateFrom() || null"
+          (change)="onDateTo($any($event.target).value)"
+          aria-label="To date"
+        />
+      </div>
       <div class="search">
         <mat-icon>search</mat-icon>
         <input
@@ -42,7 +70,6 @@
           <th>Show Title</th>
           <th>Language</th>
           <th>Status</th>
-          <th>Tickets</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -59,7 +86,6 @@
             <td>{{ p.showTitle }}</td>
             <td>{{ p.language }}</td>
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
-            <td>{{ p.ticketsSold }} / {{ p.capacity }}</td>
             <td>
               <div class="actions">
                 <a class="icon-btn" [routerLink]="['/performances', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
@@ -69,21 +95,27 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="7" class="empty">No performances found.</td></tr>
+          <tr>
+            <td colspan="6" class="empty">
+              @if (loading()) {
+                <span class="spinner" aria-hidden="true"></span> Loading performances…
+              } @else if (error()) {
+                {{ error() }}
+              } @else {
+                No performances found.
+              }
+            </td>
+          </tr>
         }
       </tbody>
     </table>
   </div>
 
   <div class="table-foot">
-    <span class="muted">Showing 1–{{ filtered().length }} of 24 performances</span>
+    <span class="muted">Showing 1–{{ filtered().length }} of {{ performances().length }} performances</span>
     <div class="pager">
       <button class="pager__btn" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
       <button class="pager__btn pager__btn--active">1</button>
-      <button class="pager__btn">2</button>
-      <button class="pager__btn">3</button>
-      <button class="pager__btn">4</button>
-      <button class="pager__btn">5</button>
       <button class="pager__btn" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
     </div>
   </div>
