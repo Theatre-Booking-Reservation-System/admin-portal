@@ -4,6 +4,8 @@ export interface AppError {
   title: string;
   message: string;
   code?: string;
+  /** HTTP status the error came from, if any (e.g. 403). */
+  status?: number;
 }
 
 /// Holds a single active error to display in the global error modal.

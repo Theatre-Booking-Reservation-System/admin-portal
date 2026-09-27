@@ -3,6 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PatronService } from '../../../core/services/patron.service';
 import { PatronSummary } from '../../../core/models/auth.models';
+import { BookingService } from '../../../core/services/booking.service';
+import { BookingItem } from '../../../core/models/booking.models';
 
 /** View-model the template renders. */
 interface CustomerView {
@@ -20,12 +22,16 @@ interface CustomerView {
 }
 
 interface BookingHistory {
+  /** Display reference (bookingRef, falling back to id). */
   id: string;
-  production: string;
+  /** Raw booking UUID — required by the cancel endpoint. */
+  bookingId: string;
   date: string;
   seats: string;
   amount: string;
-  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded';
+  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded' | 'Expired';
+  /** Whether this booking can still be cancelled. */
+  cancellable: boolean;
 }
 
 @Component({
@@ -38,6 +44,7 @@ interface BookingHistory {
 export class CustomerViewComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly patrons = inject(PatronService);
+  private readonly bookingApi = inject(BookingService);
 
   private readonly patronId = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -51,11 +58,82 @@ export class CustomerViewComponent {
 
   readonly initials = computed(() => this.customer()?.abbr ?? '');
 
-  // Booking history comes from the Booking Service — not wired yet.
-  readonly bookings: BookingHistory[] = [];
+  // Booking history from GET /patrons/{id}/bookings.
+  readonly bookings = signal<BookingHistory[]>([]);
+  readonly bookingsLoading = signal(true);
+  readonly bookingsError = signal<string | null>(null);
+
+  // ── Cancel-booking confirmation ──────────────────────────────────────────
+  readonly cancelTarget = signal<BookingHistory | null>(null);
+  readonly cancelling = signal(false);
+  readonly cancelError = signal<string | null>(null);
 
   constructor() {
     this.load();
+    this.loadBookings();
+  }
+
+  /** Load this patron's booking history. */
+  loadBookings(): void {
+    if (!this.patronId) {
+      this.bookingsLoading.set(false);
+      return;
+    }
+    this.bookingsLoading.set(true);
+    this.bookingsError.set(null);
+    this.bookingApi.getBookingsByPatronId(this.patronId).subscribe({
+      next: (res) => {
+        this.bookings.set((res.bookings ?? []).map(bookingToView));
+        this.bookingsLoading.set(false);
+      },
+      error: () => {
+        this.bookingsError.set('Could not load booking history.');
+        this.bookingsLoading.set(false);
+      },
+    });
+  }
+
+  // ── Cancel a booking ──────────────────────────────────────────────────────
+
+  /** Open the cancel-confirmation dialog for a booking. */
+  askCancel(b: BookingHistory): void {
+    this.cancelError.set(null);
+    this.cancelTarget.set(b);
+  }
+
+  /** Close the dialog (ignored while a cancel is in flight). */
+  dismissCancel(): void {
+    if (this.cancelling()) return;
+    this.cancelTarget.set(null);
+  }
+
+  /** Confirm and PUT /bookings/{id}/cancel, then mark the row cancelled. */
+  confirmCancel(): void {
+    const target = this.cancelTarget();
+    if (!target || this.cancelling()) return;
+    this.cancelling.set(true);
+    this.cancelError.set(null);
+    this.bookingApi.cancelBooking(target.bookingId).subscribe({
+      next: () => {
+        this.bookings.update((list) =>
+          list.map((b) =>
+            b.bookingId === target.bookingId
+              ? { ...b, status: 'Cancelled', cancellable: false }
+              : b,
+          ),
+        );
+        this.cancelling.set(false);
+        this.cancelTarget.set(null);
+      },
+      error: (err) => {
+        this.cancelError.set(
+          err?.status === 409
+            ? 'This booking can no longer be cancelled.'
+            : 'Could not cancel this booking. Please try again.',
+        );
+        this.cancelling.set(false);
+      },
+    });
   }
 
   load(): void {
@@ -131,6 +209,34 @@ function toView(p: PatronSummary): CustomerView {
     verified: !!p.verified,
     loyaltyMember: !!p.loyaltyHolder,
     loyaltyCardNo: p.loyaltyCardNo || '—',
+  };
+}
+
+const BOOKING_STATUS_LABEL: Record<string, BookingHistory['status']> = {
+  PENDING: 'Pending',
+  CONFIRMED: 'Confirmed',
+  CANCELLED_PATRON: 'Cancelled',
+  CANCELLED_ADMIN: 'Cancelled',
+  EXPIRED: 'Expired',
+};
+
+/** Map a BookingItem to the booking-history row. */
+function bookingToView(b: BookingItem): BookingHistory {
+  const seats = (b.seats ?? [])
+    .map((s) => s.seatRef)
+    .filter(Boolean)
+    .join(', ');
+  // Only PENDING / CONFIRMED bookings can be cancelled (not already
+  // cancelled/expired).
+  const cancellable = b.status === 'PENDING' || b.status === 'CONFIRMED';
+  return {
+    id: b.bookingRef || b.bookingId,
+    bookingId: b.bookingId,
+    date: formatDate(b.createdAt),
+    seats: seats || '—',
+    amount: b.totalLkr != null ? `LKR ${b.totalLkr.toLocaleString('en-LK')}` : '—',
+    status: (b.status && BOOKING_STATUS_LABEL[b.status]) || 'Pending',
+    cancellable,
   };
 }
 

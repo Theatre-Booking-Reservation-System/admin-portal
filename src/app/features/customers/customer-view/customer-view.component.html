@@ -89,24 +89,64 @@
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr><th>Booking ID</th><th>Production</th><th>Date &amp; Time</th><th>Seats</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+          <tr><th>Booking Ref</th><th>Booked On</th><th>Seats</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          @for (b of bookings; track b.id) {
+          @for (b of bookings(); track b.id) {
             <tr>
               <td class="cell-title">{{ b.id }}</td>
-              <td>{{ b.production }}</td>
               <td>{{ b.date }}</td>
               <td>{{ b.seats }}</td>
               <td>{{ b.amount }}</td>
               <td><span class="pill" [class]="statusClass(b.status)">{{ b.status }}</span></td>
-              <td><a class="icon-btn" [routerLink]="['/bookings', b.id]" aria-label="View booking"><mat-icon>visibility</mat-icon></a></td>
+              <td>
+                @if (b.cancellable) {
+                  <button class="icon-btn icon-btn--danger" aria-label="Cancel booking" (click)="askCancel(b)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="empty">No booking history to show.</td></tr>
+            <tr>
+              <td colspan="6" class="empty">
+                @if (bookingsLoading()) {
+                  Loading booking history…
+                } @else if (bookingsError()) {
+                  {{ bookingsError() }}
+                } @else {
+                  No booking history to show.
+                }
+              </td>
+            </tr>
           }
         </tbody>
       </table>
     </div>
   </section>
+}
+
+<!-- Cancel booking confirmation -->
+@if (cancelTarget(); as target) {
+  <div class="overlay" (click)="dismissCancel()">
+    <div class="modal" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+      <div class="modal__icon modal__icon--danger"><mat-icon>cancel</mat-icon></div>
+      <h2 class="modal__title">Cancel booking?</h2>
+      <p class="modal__message">
+        This will cancel booking <strong>{{ target.id }}</strong>. If it was paid, it will be marked
+        for refund. This action cannot be undone.
+      </p>
+      @if (cancelError()) {
+        <p class="field-error"><mat-icon>error_outline</mat-icon> {{ cancelError() }}</p>
+      }
+      <div class="modal__actions">
+        <button class="btn btn--ghost" (click)="dismissCancel()" [disabled]="cancelling()">Keep booking</button>
+        <button class="btn btn--danger" (click)="confirmCancel()" [disabled]="cancelling()">
+          {{ cancelling() ? 'Cancelling…' : 'Cancel booking' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }

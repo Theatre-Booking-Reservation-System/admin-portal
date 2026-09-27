@@ -69,6 +69,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           title: titleFor(err.status),
           message: messageFor(err),
           code: err.error?.statusCode,
+          status: err.status,
         });
       }
 

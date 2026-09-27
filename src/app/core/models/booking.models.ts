@@ -12,42 +12,40 @@ export type BookingStatus =
 
 export type PaymentStatus = 'UNPAID' | 'PAID' | 'REFUNDED' | 'FAILED';
 
-export type ConcessionType = 'UNDER_16' | 'OVER_70' | 'LARGE_PARTY';
+export type TicketType = 'REGULAR' | 'GROUP' | 'LOYALTY';
 
-export interface BookingLineRequest {
-  perfSeatId?: string;
+export type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'EWALLET' | 'BANK_TRANSFER';
+
+/** A seat chosen when creating a booking. */
+export interface SeatSelection {
+  seatId?: string;
   seatRef?: string;
   zoneName?: string;
-  sessionType?: string;
-  concessionType?: ConcessionType;
-  nicPassport?: string;
-  basePriceLkr?: number;
-  concessionDiscLkr?: number;
-  loyaltyDiscLkr?: number;
-  vatLkr?: number;
-  finalPriceLkr?: number;
+  section?: string;
+}
+
+/** A seat as returned on a booking. */
+export interface BookingSeatItem {
+  seatId?: string;
+  seatRef?: string;
+  zoneName?: string;
+  section?: string;
+}
+
+export interface PaymentDetails {
+  cardNumber?: string;
+  expiry?: string;
+  cvv?: string;
+  cardHolderName?: string;
 }
 
 export interface BookingRequest {
   patronId?: string;
-  guestEmail?: string;
   performanceId?: string;
-  paymentToken?: string;
-  lines?: BookingLineRequest[];
-}
-
-export interface BookingLineItem {
-  lineId: string;
-  perfSeatId?: string;
-  seatRef?: string;
-  zoneName?: string;
-  sessionType?: string;
-  concessionType?: ConcessionType;
-  basePriceLkr?: number;
-  concessionDiscLkr?: number;
-  loyaltyDiscLkr?: number;
-  vatLkr?: number;
-  finalPriceLkr?: number;
+  seats?: SeatSelection[];
+  ticketType?: TicketType;
+  paymentMethod?: PaymentMethod;
+  paymentDetails?: PaymentDetails;
 }
 
 export interface BookingResponse {
@@ -56,24 +54,26 @@ export interface BookingResponse {
   bookingId: string;
   bookingRef: string;
   patronId?: string;
-  guestEmail?: string;
   performanceId?: string;
-  status?: BookingStatus;
-  isFlagged?: boolean;
-  subtotalLkr?: number;
-  discountLkr?: number;
-  vatLkr?: number;
+  productionName?: string;
+  performanceDate?: string; // date
+  performanceTime?: string; // time-local
+  seats?: BookingSeatItem[];
+  ticketType?: TicketType;
   totalLkr?: number;
-  paymentToken?: string;
+  status?: BookingStatus;
   paymentStatus?: PaymentStatus;
-  createdAt?: string;
-  lines?: BookingLineItem[];
+  cardLast4?: string;
+  createdAt?: string; // date-time
+  qrCode?: string;
 }
 
 export interface BookingItem {
   bookingId: string;
   bookingRef: string;
   performanceId?: string;
+  seats?: BookingSeatItem[];
+  ticketType?: TicketType;
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
   totalLkr?: number;
@@ -84,4 +84,12 @@ export interface BookingListResponse {
   statusCode: string;
   statusDescription: string;
   bookings: BookingItem[];
+}
+
+export interface PerformanceBookedSeatsResponse {
+  statusCode: string;
+  statusDescription: string;
+  performanceId: string;
+  bookedSeatIds?: string[];
+  bookedSeatRefs?: string[];
 }

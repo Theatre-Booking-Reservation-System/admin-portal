@@ -6,6 +6,7 @@ import {
   BookingListResponse,
   BookingRequest,
   BookingResponse,
+  PerformanceBookedSeatsResponse,
 } from '../models/booking.models';
 
 /**
@@ -36,5 +37,14 @@ export class BookingService {
   /** List all bookings placed by a patron, most recent first. */
   getBookingsByPatronId(patronId: string): Observable<BookingListResponse> {
     return this.http.get<BookingListResponse>(`${this.baseUrl}/patrons/${patronId}/bookings`);
+  }
+
+  /** Booked seats for a performance (ids + refs) — for seat-map availability. */
+  getBookedSeatsByPerformanceId(
+    performanceId: string,
+  ): Observable<PerformanceBookedSeatsResponse> {
+    return this.http.get<PerformanceBookedSeatsResponse>(
+      `${this.baseUrl}/performances/${performanceId}/bookings`,
+    );
   }
 }

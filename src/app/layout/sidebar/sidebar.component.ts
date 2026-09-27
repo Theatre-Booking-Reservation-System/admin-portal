@@ -30,8 +30,9 @@ export class SidebarComponent {
     { label: 'Performances', icon: 'event', route: '/performances' },
     { label: 'Bookings', icon: 'confirmation_number', route: '/bookings' },
     { label: 'Customers', icon: 'group', route: '/customers' },
-    { label: 'Concessions', icon: 'sell', route: '/concessions' },
-    { label: 'Payments', icon: 'payments', route: '/payments' },
-    { label: 'Reports', icon: 'bar_chart', route: '/reports' },
+    // Hidden for now — not part of the current scope.
+    // { label: 'Concessions', icon: 'sell', route: '/concessions' },
+    // { label: 'Payments', icon: 'payments', route: '/payments' },
+    // { label: 'Reports', icon: 'bar_chart', route: '/reports' },
   ];
 }

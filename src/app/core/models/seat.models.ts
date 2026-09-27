@@ -21,7 +21,6 @@ export interface SeatZoneListResponse {
 }
 
 export interface PerformanceSeatItem {
-  perfSeatId: string;
   seatId: string;
   zoneId: string;
   section?: SeatSection;
@@ -30,7 +29,6 @@ export interface PerformanceSeatItem {
   seatNumber?: number;
   wheelchairSpace?: boolean;
   status?: SeatStatus;
-  heldUntil?: string; // date-time
 }
 
 export interface PerformanceSeatListResponse {
@@ -38,4 +36,10 @@ export interface PerformanceSeatListResponse {
   statusDescription: string;
   performanceId: string;
   seats: PerformanceSeatItem[];
+}
+
+export interface SeatCountResponse {
+  statusCode: string;
+  statusDescription: string;
+  total: number;
 }

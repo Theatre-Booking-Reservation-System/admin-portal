@@ -72,17 +72,16 @@
   <article class="card">
     <header class="card-head">
       <h2 class="card-title">Today's Shows</h2>
-      <a class="link" href="#">View All →</a>
+      <a class="link" routerLink="/performances">View All →</a>
     </header>
 
     <ul class="shows">
-      @for (show of todayShows; track show.title) {
+      @for (show of todayShows(); track $index) {
         <li class="show">
           <span class="show__thumb">{{ show.abbr }}</span>
           <div class="show__meta">
             <span class="show__title">{{ show.title }}</span>
             <span class="show__time muted">{{ show.time }}</span>
-            <span class="show__seats muted">{{ show.seats }}</span>
           </div>
           <span
             class="pill"
@@ -90,13 +89,23 @@
             [class.pill--info]="show.session === 'Evening'"
           >{{ show.session }}</span>
         </li>
+      } @empty {
+        <li class="show show--empty muted">
+          @if (todayShowsLoading()) {
+            Loading today's shows…
+          } @else if (todayShowsError()) {
+            {{ todayShowsError() }}
+          } @else {
+            No shows scheduled for today.
+          }
+        </li>
       }
     </ul>
   </article>
 </section>
 
-<!-- Recent bookings + Quick actions -->
-<section class="grid-2 grid-2--wide">
+<!-- Recent bookings -->
+<section>
   <article class="card">
     <header class="card-head">
       <h2 class="card-title">Recent Bookings</h2>
@@ -132,22 +141,6 @@
           }
         </tbody>
       </table>
-    </div>
-  </article>
-
-  <article class="card">
-    <header class="card-head">
-      <h2 class="card-title">Quick Actions</h2>
-    </header>
-
-    <div class="actions">
-      @for (a of quickActions; track a.title) {
-        <button class="action">
-          <span class="action__icon"><mat-icon>{{ a.icon }}</mat-icon></span>
-          <span class="action__title">{{ a.title }}</span>
-          <span class="action__sub muted">{{ a.subtitle }}</span>
-        </button>
-      }
     </div>
   </article>
 </section>

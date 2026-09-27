@@ -1,159 +1,169 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { BookingService } from '../../core/services/booking.service';
-import { BookingResponse } from '../../core/models/booking.models';
+import { CatalogueService } from '../../core/services/catalogue.service';
 
-/** View-model shape the template renders. */
-interface Booking {
+/** Production option for the first dropdown. */
+interface ProductionOption {
   id: string;
-  customer: string;
-  production: string;
-  performanceDate: string;
-  performanceTime: string;
-  seats: string;
-  amount: string;
-  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded' | 'Expired';
-  payment: 'Paid' | 'Pending' | 'Refunded' | 'Failed';
+  title: string;
 }
 
-type FilterKey = 'All' | 'Confirmed' | 'Pending' | 'Cancelled' | 'Refunded';
+/** Performance option for the second dropdown. */
+interface PerformanceOption {
+  id: string;
+  label: string;
+}
 
 /**
- * Bookings list.
+ * Bookings.
  *
- * The Booking Service exposes lookup-by-reference and per-patron listing, but
- * no "list every booking" endpoint. So the search box looks a booking up by
- * its reference (e.g. STB-20260913-00847) and shows the match here.
+ * The Booking Service has no "list every booking" endpoint. The only per-set
+ * listing is GET /performances/{id}/bookings, which returns the booked seats
+ * for one performance. So the flow is: pick a production, then a performance,
+ * then we show that performance's booked seats.
  */
 @Component({
   selector: 'app-bookings',
   standalone: true,
-  imports: [RouterLink, MatIconModule],
+  imports: [MatIconModule],
   templateUrl: './bookings.component.html',
   styleUrl: './bookings.component.scss',
 })
 export class BookingsComponent {
   private readonly bookingApi = inject(BookingService);
+  private readonly catalogue = inject(CatalogueService);
 
+  // Selections
+  readonly productionId = signal('');
+  readonly performanceId = signal('');
   readonly search = signal('');
-  readonly filter = signal<FilterKey>('All');
-  readonly loading = signal(false);
+
+  // Dropdown data
+  readonly productions = signal<ProductionOption[]>([]);
+  readonly performances = signal<PerformanceOption[]>([]);
+
+  // Loading / error state
+  readonly productionsLoading = signal(true);
+  readonly performancesLoading = signal(false);
+  readonly seatsLoading = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly bookings = signal<Booking[]>([]);
+  /** Booked seat refs for the selected performance. */
+  readonly bookedSeats = signal<string[]>([]);
 
-  readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
-    const list = this.bookings();
-    return [
-      { key: 'All', label: 'All', count: list.length },
-      { key: 'Confirmed', label: 'Confirmed', count: list.filter((b) => b.status === 'Confirmed').length },
-      { key: 'Pending', label: 'Pending', count: list.filter((b) => b.status === 'Pending').length },
-      { key: 'Cancelled', label: 'Cancelled', count: list.filter((b) => b.status === 'Cancelled').length },
-      { key: 'Refunded', label: 'Refunded', count: list.filter((b) => b.payment === 'Refunded').length },
-    ];
-  });
-
-  readonly filtered = computed(() => {
+  readonly filteredSeats = computed(() => {
     const q = this.search().toLowerCase().trim();
-    const f = this.filter();
-    return this.bookings().filter((b) => {
-      const matchesFilter = f === 'All' || b.status === f || (f === 'Refunded' && b.payment === 'Refunded');
-      const matchesSearch =
-        !q ||
-        b.id.toLowerCase().includes(q) ||
-        b.customer.toLowerCase().includes(q) ||
-        b.production.toLowerCase().includes(q);
-      return matchesFilter && matchesSearch;
-    });
+    return this.bookedSeats().filter((s) => !q || s.toLowerCase().includes(q));
   });
 
-  statusClass(s: string): string {
-    switch (s) {
-      case 'Confirmed':
-      case 'Paid':
-        return 'pill--success';
-      case 'Pending':
-        return 'pill--warning';
-      case 'Cancelled':
-      case 'Failed':
-      case 'Expired':
-        return 'pill--danger';
-      case 'Refunded':
-        return 'pill--info';
-      default:
-        return 'pill--muted';
-    }
+  constructor() {
+    this.loadProductions();
   }
 
-  onSearch(value: string) {
-    this.search.set(value);
-    const ref = value.trim();
-    // Look up by full booking reference (STB-YYYYMMDD-NNNNN).
-    if (/^STB-\d{8}-\d+$/i.test(ref)) {
-      this.lookupByRef(ref);
-    }
-  }
-
-  private lookupByRef(ref: string): void {
-    this.loading.set(true);
+  private loadProductions(): void {
+    this.productionsLoading.set(true);
     this.error.set(null);
-    this.bookingApi.getBookingByRef(ref).subscribe({
+    this.catalogue.searchProductions({ size: 200, sort: 'releaseDate,asc' }).subscribe({
       next: (res) => {
-        this.bookings.set(res.bookingId ? [toView(res)] : []);
-        this.loading.set(false);
+        this.productions.set(
+          (res.content ?? []).map((p) => ({ id: p.productionId, title: p.title || 'Untitled' })),
+        );
+        this.productionsLoading.set(false);
       },
       error: () => {
-        this.bookings.set([]);
-        this.error.set(`No booking found for reference "${ref}".`);
-        this.loading.set(false);
+        this.error.set('Could not load productions.');
+        this.productionsLoading.set(false);
       },
     });
+  }
+
+  /** Production chosen → load its performances, reset downstream state. */
+  onProductionChange(id: string): void {
+    this.productionId.set(id);
+    this.performanceId.set('');
+    this.performances.set([]);
+    this.bookedSeats.set([]);
+    this.error.set(null);
+    if (!id) return;
+
+    this.performancesLoading.set(true);
+    this.catalogue.getPerformancesByProductionId(id).subscribe({
+      next: (res) => {
+        this.performances.set(
+          (res.performances ?? []).map((pf) => ({
+            id: pf.performanceId,
+            label: performanceLabel(pf.date, pf.time, pf.sessionType),
+          })),
+        );
+        this.performancesLoading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load performances for this production.');
+        this.performancesLoading.set(false);
+      },
+    });
+  }
+
+  /** Performance chosen → load its booked seats. */
+  onPerformanceChange(id: string): void {
+    this.performanceId.set(id);
+    this.bookedSeats.set([]);
+    this.error.set(null);
+    if (!id) return;
+
+    this.seatsLoading.set(true);
+    this.bookingApi.getBookedSeatsByPerformanceId(id).subscribe({
+      next: (res) => {
+        // Prefer human-readable seat refs; fall back to ids.
+        this.bookedSeats.set(res.bookedSeatRefs?.length ? res.bookedSeatRefs : res.bookedSeatIds ?? []);
+        this.seatsLoading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load bookings for this performance.');
+        this.seatsLoading.set(false);
+      },
+    });
+  }
+
+  onSearch(value: string): void {
+    this.search.set(value);
+  }
+
+  reset(): void {
+    this.productionId.set('');
+    this.performanceId.set('');
+    this.performances.set([]);
+    this.bookedSeats.set([]);
+    this.search.set('');
+    this.error.set(null);
   }
 }
 
-const STATUS_LABEL: Record<string, Booking['status']> = {
-  PENDING: 'Pending',
-  CONFIRMED: 'Confirmed',
-  CANCELLED_PATRON: 'Cancelled',
-  CANCELLED_ADMIN: 'Cancelled',
-  EXPIRED: 'Expired',
-};
+const SESSION_LABEL: Record<string, string> = { MATINEE: 'Matinee', EVENING: 'Evening' };
 
-const PAYMENT_LABEL: Record<string, Booking['payment']> = {
-  UNPAID: 'Pending',
-  PAID: 'Paid',
-  REFUNDED: 'Refunded',
-  FAILED: 'Failed',
-};
-
-/** Map a BookingResponse to the template's view-model. */
-function toView(b: BookingResponse): Booking {
-  const seats = (b.lines ?? [])
-    .map((l) => l.seatRef)
-    .filter(Boolean)
-    .join(', ');
-  return {
-    id: b.bookingRef || b.bookingId,
-    customer: b.guestEmail || '—',
-    production: '—',
-    performanceDate: formatDate(b.createdAt),
-    performanceTime: '',
-    seats: seats || '—',
-    amount: formatLkr(b.totalLkr),
-    status: (b.status && STATUS_LABEL[b.status]) || 'Pending',
-    payment: (b.paymentStatus && PAYMENT_LABEL[b.paymentStatus]) || 'Pending',
-  };
+function performanceLabel(date?: string, time?: string, session?: string): string {
+  const d = formatDate(date);
+  const t = formatTime(time);
+  const s = session ? SESSION_LABEL[session] ?? session : '';
+  return [d, t, s].filter(Boolean).join(' · ') || 'Performance';
 }
 
 function formatDate(dateStr?: string): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function formatLkr(amount?: number): string {
-  if (amount === null || amount === undefined) return '—';
-  return `LKR ${amount.toLocaleString('en-LK')}`;
+/** "18:30:00" / "18:30" -> "6:30 PM". */
+function formatTime(time?: string): string {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  const hour = Number(h);
+  const min = Number(m ?? 0);
+  if (isNaN(hour)) return '';
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:${String(min).padStart(2, '0')} ${period}`;
 }
