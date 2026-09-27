@@ -118,15 +118,24 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
+                   <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
                 <a class="icon-btn" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
-                <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+             
                 <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
               </div>
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="8" class="empty">No productions found.</td>
+            <td colspan="8" class="empty">
+              @if (loading()) {
+                <span class="spinner" aria-hidden="true"></span> Loading productions…
+              } @else if (error()) {
+                {{ error() }}
+              } @else {
+                No productions found.
+              }
+            </td>
           </tr>
         }
       </tbody>

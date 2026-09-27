@@ -2,24 +2,32 @@
 <nav class="crumbs">
   <a routerLink="/productions">Productions</a>
   <mat-icon>chevron_right</mat-icon>
-  <span>{{ production.title }}</span>
+  <span>{{ production()?.title ?? 'Production' }}</span>
 </nav>
+
+@if (loading()) {
+  <section class="card loading-card">
+    <span class="spinner" aria-hidden="true"></span>
+    <p class="muted">Loading production…</p>
+  </section>
+} @else if (error()) {
+  <section class="card"><p class="muted">{{ error() }}</p></section>
+} @else if (production(); as prod) {
 
 <!-- Header -->
 <header class="view-head">
   <div class="view-head__left">
-    <h1 class="page-title">{{ production.title }}</h1>
-    <span class="pill" [class]="statusClass(production.status)">{{ production.status }}</span>
+    <h1 class="page-title">{{ prod.title }}</h1>
+    <span class="pill" [class]="statusClass(prod.status)">{{ prod.status }}</span>
     <div class="view-head__meta muted">
-      <span><mat-icon>calendar_today</mat-icon>{{ production.dates }}</span>
-      <span><mat-icon>place</mat-icon>{{ production.venue }}</span>
+      <span><mat-icon>calendar_today</mat-icon>{{ prod.dates }}</span>
+      <span><mat-icon>place</mat-icon>{{ prod.venue }}</span>
     </div>
   </div>
   <div class="head-actions">
-    <a class="btn btn--ghost" [routerLink]="['/productions', 'p1', 'edit']">
+    <a class="btn btn--ghost" [routerLink]="['/productions', prod.id, 'edit']">
       <mat-icon>edit</mat-icon> Edit
     </a>
-    <button class="btn btn--danger"><mat-icon>delete</mat-icon> Delete</button>
   </div>
 </header>
 
@@ -36,28 +44,31 @@
 @if (tab() === 'overview') {
   <div class="grid-2">
     <section class="card poster-card">
-      <div class="poster-lg">{{ production.abbr }}</div>
+      @if (prod.poster) {
+        <img class="poster-lg poster-lg--img" [src]="prod.poster" [alt]="prod.title + ' poster'" />
+      } @else {
+        <div class="poster-lg">{{ prod.abbr }}</div>
+      }
     </section>
 
     <section class="card">
       <h2 class="card-title">Production Information</h2>
       <dl class="info">
-        <div><dt>Title</dt><dd>{{ production.title }}</dd></div>
-        <div><dt>Language</dt><dd>{{ production.language }}</dd></div>
-        <div><dt>Genre</dt><dd>{{ production.genre }}</dd></div>
-        <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(production.status)">{{ production.status }}</span></dd></div>
-        <div><dt>Created By</dt><dd>{{ production.createdBy }}</dd></div>
-        <div><dt>Created Date</dt><dd>{{ production.createdDate }}</dd></div>
-        <div><dt>Last Updated</dt><dd>{{ production.lastUpdated }}</dd></div>
+        <div><dt>Title</dt><dd>{{ prod.title }}</dd></div>
+        <div><dt>Language</dt><dd>{{ prod.language }}</dd></div>
+        <div><dt>Genre</dt><dd>{{ prod.genre }}</dd></div>
+        <div><dt>Status</dt><dd><span class="pill" [class]="statusClass(prod.status)">{{ prod.status }}</span></dd></div>
+        <div><dt>Base Ticket Price</dt><dd>{{ prod.basePrice }}</dd></div>
+        <div><dt>Run Dates</dt><dd>{{ prod.dates }}</dd></div>
       </dl>
 
       <h3 class="sub-title">Synopsis</h3>
-      <p class="muted">{{ production.synopsis }}</p>
+      <p class="muted">{{ prod.synopsis }}</p>
 
       <h3 class="sub-title">Additional Information</h3>
       <dl class="info">
-        <div><dt>Age Restriction</dt><dd>{{ production.ageRestriction }}</dd></div>
-        <div><dt>Duration</dt><dd>{{ production.duration }}</dd></div>
+        <div><dt>Age Restriction</dt><dd>{{ prod.ageRestriction }}</dd></div>
+        <div><dt>Duration</dt><dd>{{ prod.duration }}</dd></div>
       </dl>
     </section>
   </div>
@@ -68,39 +79,20 @@
   <section class="card">
     <header class="card-head">
       <h2 class="card-title">Cast &amp; Crew</h2>
-      <button class="btn btn--primary" (click)="openAddCast()"><mat-icon>add</mat-icon> Add Cast/Crew</button>
     </header>
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr><th>Name</th><th>Role</th><th>Actions</th></tr>
+          <tr><th>Name</th><th>Role</th></tr>
         </thead>
         <tbody>
           @for (c of cast(); track $index) {
             <tr>
               <td class="cell-title">{{ c.name }}</td>
               <td>{{ c.role }}</td>
-              <td>
-                <div class="actions">
-                  <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="removeCast($index)"><mat-icon>delete</mat-icon></button>
-                </div>
-              </td>
             </tr>
-          }
-          @if (showAddCast()) {
-            <tr class="add-row">
-              <td><input class="input" type="text" placeholder="Name" [(ngModel)]="newCastName" name="newCastName" /></td>
-              <td><input class="input" type="text" placeholder="Role" [(ngModel)]="newCastRole" name="newCastRole" /></td>
-              <td>
-                <div class="actions">
-                  <button class="icon-btn icon-btn--primary" aria-label="Save" (click)="saveCast()"><mat-icon>check</mat-icon></button>
-                  <button class="icon-btn" aria-label="Cancel" (click)="cancelAddCast()"><mat-icon>close</mat-icon></button>
-                </div>
-              </td>
-            </tr>
-          }
-          @if (!cast().length && !showAddCast()) {
-            <tr><td colspan="3" class="empty">No cast or crew yet.</td></tr>
+          } @empty {
+            <tr><td colspan="2" class="empty">No cast or crew yet.</td></tr>
           }
         </tbody>
       </table>
@@ -113,12 +105,11 @@
   <section class="card">
     <header class="card-head">
       <h2 class="card-title">Performances ({{ performances.length }})</h2>
-      <button class="btn btn--primary"><mat-icon>add</mat-icon> Add Performance</button>
     </header>
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr><th>Date</th><th>Time</th><th>Show Title</th><th>Venue</th><th>Status</th><th>Actions</th></tr>
+          <tr><th>Date</th><th>Time</th><th>Show Title</th><th>Venue</th><th>Status</th></tr>
         </thead>
         <tbody>
           @for (p of performances; track p.show + p.time) {
@@ -128,13 +119,9 @@
               <td class="cell-title">{{ p.show }}</td>
               <td>{{ p.venue }}</td>
               <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
-              <td>
-                <div class="actions">
-                  <button class="icon-btn" aria-label="Edit"><mat-icon>edit</mat-icon></button>
-                  <button class="icon-btn icon-btn--danger" aria-label="Delete"><mat-icon>delete</mat-icon></button>
-                </div>
-              </td>
             </tr>
+          } @empty {
+            <tr><td colspan="5" class="empty">No performances scheduled.</td></tr>
           }
         </tbody>
       </table>
@@ -147,108 +134,55 @@
   <section class="card">
     <header class="card-head">
       <h2 class="card-title">Ticket Pricing</h2>
-      @if (editingPricing()) {
-        <div class="head-actions">
-          <button class="btn btn--ghost" (click)="cancelPricing()">Cancel</button>
-          <button class="btn btn--primary" (click)="savePricing()"><mat-icon>check</mat-icon> Save Pricing</button>
-        </div>
-      } @else {
-        <button class="btn btn--ghost" (click)="startEditPricing()"><mat-icon>edit</mat-icon> Edit Pricing</button>
-      }
     </header>
 
     <div class="base-price">
       <span class="muted">Base Ticket Price (per production)</span>
-      @if (editingPricing()) {
-        <input class="input base-price__input" type="text" [(ngModel)]="draftBasePrice" name="basePrice" />
-      } @else {
-        <span class="base-price__val">{{ basePrice() }}</span>
-      }
+      <span class="base-price__val">{{ prod.basePrice }}</span>
     </div>
 
-    <div class="zones">
-      <div class="zone">
-        <h3 class="zone__title">Stalls</h3>
-        <table class="table table--sm">
-          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
-          <tbody>
-            @if (editingPricing()) {
-              @for (r of draftStalls; track $index) {
-                <tr>
-                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'st-s-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'st-m-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'st-e-' + $index" /></td>
-                </tr>
+    @if (zonesLoading()) {
+      <p class="muted">Loading seat zones…</p>
+    } @else if (zonesError()) {
+      <p class="muted">{{ zonesError() }}</p>
+    } @else {
+      <!-- Seat-zone map: sections laid out from the stage back -->
+      <div class="seatmap">
+        <div class="seatmap__stage">STAGE</div>
+        @for (g of sections(); track g.section) {
+          <div class="seatmap__section">
+            <span class="seatmap__section-label">{{ g.label }}</span>
+            <div class="seatmap__zones">
+              @for (z of g.zones; track z.zoneName) {
+                <div class="seatmap__zone" [class]="'seatmap__zone--' + g.section.toLowerCase()">
+                  <span class="seatmap__zone-name">{{ z.zoneName }}</span>
+                  <span class="seatmap__zone-price">{{ z.evening }}</span>
+                </div>
               }
-            } @else {
-              @for (r of stalls(); track $index) {
-                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-      <div class="zone">
-        <h3 class="zone__title">Circle</h3>
-        <table class="table table--sm">
-          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
-          <tbody>
-            @if (editingPricing()) {
-              @for (r of draftCircle; track $index) {
-                <tr>
-                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'ci-s-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'ci-m-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'ci-e-' + $index" /></td>
-                </tr>
-              }
-            } @else {
-              @for (r of circle(); track $index) {
-                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-      <div class="zone">
-        <h3 class="zone__title">Upper Circle</h3>
-        <table class="table table--sm">
-          <thead><tr><th>Seats</th><th>Matinee</th><th>Evening</th></tr></thead>
-          <tbody>
-            @if (editingPricing()) {
-              @for (r of draftUpperCircle; track $index) {
-                <tr>
-                  <td><input class="input" type="text" [(ngModel)]="r.seats" [name]="'uc-s-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.matinee" [name]="'uc-m-' + $index" /></td>
-                  <td><input class="input" type="text" [(ngModel)]="r.evening" [name]="'uc-e-' + $index" /></td>
-                </tr>
-              }
-            } @else {
-              @for (r of upperCircle(); track $index) {
-                <tr><td>{{ r.seats }}</td><td>{{ r.matinee }}</td><td>{{ r.evening }}</td></tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <h3 class="sub-title">Concessions</h3>
-    <table class="table table--sm concessions">
-      <tbody>
-        @if (editingPricing()) {
-          @for (c of draftConcessions; track $index) {
-            <tr>
-              <td class="cell-title"><input class="input" type="text" [(ngModel)]="c.type" [name]="'co-t-' + $index" /></td>
-              <td><input class="input" type="text" [(ngModel)]="c.discount" [name]="'co-d-' + $index" /></td>
-            </tr>
-          }
-        } @else {
-          @for (c of concessions(); track $index) {
-            <tr><td class="cell-title">{{ c.type }}</td><td class="muted">{{ c.discount }}</td></tr>
-          }
+            </div>
+          </div>
         }
-      </tbody>
-    </table>
+      </div>
+
+      <!-- Per-zone price tables grouped by section -->
+      <div class="zones">
+        @for (g of sections(); track g.section) {
+          <div class="zone">
+            <h3 class="zone__title">{{ g.label }}</h3>
+            <table class="table table--sm">
+              <thead><tr><th>Zone</th><th>Matinee</th><th>Evening</th></tr></thead>
+              <tbody>
+                @for (z of g.zones; track z.zoneName) {
+                  <tr><td>{{ z.zoneName }}</td><td>{{ z.matinee }}</td><td>{{ z.evening }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @empty {
+          <p class="muted">No seat zones defined.</p>
+        }
+      </div>
+    }
   </section>
 }
 
@@ -256,7 +190,12 @@
 @if (tab() === 'media') {
   <section class="card">
     <h2 class="card-title">Poster Image</h2>
-    <div class="poster-lg poster-lg--media">{{ production.abbr }}</div>
-    <button class="btn btn--ghost full"><mat-icon>photo_camera</mat-icon> Change Image</button>
+    @if (prod.poster) {
+      <img class="poster-lg poster-lg--media poster-lg--img" [src]="prod.poster" [alt]="prod.title + ' poster'" />
+    } @else {
+      <div class="poster-lg poster-lg--media">{{ prod.abbr }}</div>
+    }
   </section>
+}
+
 }

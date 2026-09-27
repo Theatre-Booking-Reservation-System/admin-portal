@@ -1,7 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { CatalogueService } from '../../../core/services/catalogue.service';
+import { ProductionItem } from '../../../core/models/catalogue.models';
+import { SeatService } from '../../../core/services/seat.service';
+import { SeatSection, SeatZoneItem } from '../../../core/models/seat.models';
 
 type Tab = 'overview' | 'cast' | 'performances' | 'pricing' | 'media';
 
@@ -18,26 +21,55 @@ interface PerformanceRow {
   status: 'Upcoming' | 'Active' | 'Completed';
 }
 
-interface PriceTier {
-  seats: string;
+/** A zone's computed matinee/evening price for this production. */
+interface ZonePrice {
+  zoneName: string;
+  section: SeatSection;
   matinee: string;
   evening: string;
 }
 
-interface ConcessionRow {
-  type: string;
-  discount: string;
+/** A section group for the pricing tables + seat map. */
+interface SectionGroup {
+  section: SeatSection;
+  label: string;
+  zones: ZonePrice[];
+}
+
+/** Header / overview view-model, populated from the catalogue API. */
+interface ProductionView {
+  id: string;
+  title: string;
+  status: 'Now Showing' | 'Upcoming' | 'Expired' | 'Inactive';
+  dates: string;
+  venue: string;
+  language: string;
+  genre: string;
+  abbr: string;
+  poster: string | null;
+  synopsis: string;
+  ageRestriction: string;
+  duration: string;
+  basePrice: string;
 }
 
 @Component({
   selector: 'app-production-view',
   standalone: true,
-  imports: [FormsModule, RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule],
   templateUrl: './production-view.component.html',
   styleUrl: './production-view.component.scss',
 })
 export class ProductionViewComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly catalogue = inject(CatalogueService);
+  private readonly seats = inject(SeatService);
+
+  private readonly productionId = this.route.snapshot.paramMap.get('id') ?? '';
+
   readonly tab = signal<Tab>('overview');
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
   readonly tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
@@ -47,133 +79,210 @@ export class ProductionViewComponent {
     { key: 'media', label: 'Media' },
   ];
 
-  // ── Header / overview data (hardcoded) ──────────────────────────────────
-  readonly production = {
-    title: 'Sanda Katha',
-    status: 'Active',
-    dates: '24 May 2025 – 6 Jun 2025',
-    venue: 'Main Theatre',
-    language: 'Sinhala',
-    genre: 'Drama',
-    abbr: 'SK',
-    synopsis:
-      'Sanda Katha is a captivating drama that brings together tradition and modern storytelling. Sinhala. A journey of love, heritage and identity.',
-    createdBy: 'Admin User',
-    createdDate: '10 May 2025',
-    lastUpdated: '15 May 2025',
-    ageRestriction: 'All Ages',
-    duration: '120 minutes',
-    basePrice: 'LKR 1,000',
-  };
+  /** The production loaded from GET /productions/{id}. */
+  readonly production = signal<ProductionView | null>(null);
 
-  readonly cast = signal<CastMember[]>([
-    { name: 'Nimal Perera', role: 'Lead Actor' },
-    { name: 'Kavindi Silva', role: 'Lead Actress' },
-    { name: 'Ruwan Jayasinghe', role: 'Director' },
-    { name: 'Tharindu Fernando', role: 'Producer' },
-    { name: 'Anjali Fernando', role: 'Stage Manager' },
-  ]);
+  /** Read-only cast/crew list from the production. */
+  readonly cast = signal<CastMember[]>([]);
 
-  /** Inline "add cast/crew" row state. */
-  readonly showAddCast = signal(false);
-  newCastName = '';
-  newCastRole = '';
+  // ── Ticket pricing: real seat zones × the production's base ticket cost ──
+  private readonly zones = signal<SeatZoneItem[]>([]);
+  private readonly baseCost = signal<number | null>(null);
+  readonly zonesLoading = signal(true);
+  readonly zonesError = signal<string | null>(null);
 
-  openAddCast() {
-    this.newCastName = '';
-    this.newCastRole = '';
-    this.showAddCast.set(true);
+  /** Zones grouped by section, each priced from the base ticket cost. */
+  readonly sections = computed<SectionGroup[]>(() => {
+    const base = this.baseCost();
+    const order: SeatSection[] = ['STALLS', 'CIRCLE', 'UPPER_CIRCLE'];
+    return order
+      .map((section) => ({
+        section,
+        label: SECTION_LABEL[section],
+        zones: this.zones()
+          .filter((z) => z.section === section)
+          .map((z) => ({
+            zoneName: z.zoneName || '—',
+            section,
+            matinee: price(base, z.matineePct),
+            evening: price(base, z.eveningPct),
+          })),
+      }))
+      .filter((g) => g.zones.length > 0);
+  });
+
+  constructor() {
+    this.load();
+    this.loadZones();
   }
 
-  cancelAddCast() {
-    this.showAddCast.set(false);
+  load(): void {
+    if (!this.productionId) {
+      this.error.set('No production id provided.');
+      this.loading.set(false);
+      return;
+    }
+    this.loading.set(true);
+    this.error.set(null);
+    this.catalogue.getProductionById(this.productionId).subscribe({
+      next: (res) => {
+        this.production.set(toView(res));
+        this.baseCost.set(res.baseTicketCost ?? null);
+        this.cast.set(
+          (res.castCrew ?? [])
+            .filter((m) => (m.value ?? '').trim() || (m.key ?? '').trim())
+            .map((m) => ({ name: m.value ?? '', role: m.key ?? '' })),
+        );
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load this production. Please try again.');
+        this.loading.set(false);
+      },
+    });
   }
 
-  saveCast() {
-    const name = this.newCastName.trim();
-    const role = this.newCastRole.trim();
-    if (!name || !role) return;
-    this.cast.update((list) => [...list, { name, role }]);
-    this.showAddCast.set(false);
-  }
+  readonly performances: PerformanceRow[] = [];
 
-  removeCast(index: number) {
-    this.cast.update((list) => list.filter((_, i) => i !== index));
-  }
-
-  readonly performances: PerformanceRow[] = [
-    { date: '24 May 2025', time: '10:00 AM', show: 'Sanda Katha - Matinee', venue: 'Main Theatre', status: 'Upcoming' },
-    { date: '24 May 2025', time: '6:30 PM', show: 'Sanda Katha - Evening', venue: 'Main Theatre', status: 'Upcoming' },
-    { date: '25 May 2025', time: '3:00 PM', show: 'Sanda Katha', venue: 'Main Theatre', status: 'Upcoming' },
-    { date: '6 Jun 2025', time: '6:30 PM', show: 'Sanda Katha - Final Show', venue: 'Main Theatre', status: 'Upcoming' },
-  ];
-
-  // ── Ticket pricing (from the Scenario 2 brief) ──────────────────────────
-  readonly basePrice = signal('LKR 1,000');
-  readonly stalls = signal<PriceTier[]>([
-    { seats: 'AA – DD', matinee: '+200%', evening: '+250%' },
-    { seats: 'A – M', matinee: '+150%', evening: '+175%' },
-    { seats: 'P – V', matinee: '+100%', evening: '+150%' },
-  ]);
-  readonly circle = signal<PriceTier[]>([
-    { seats: 'Sides', matinee: '+150%', evening: '+175%' },
-    { seats: 'Outer', matinee: '+125%', evening: '+150%' },
-    { seats: 'Centre (A–E)', matinee: '+210%', evening: '+220%' },
-  ]);
-  readonly upperCircle = signal<PriceTier[]>([
-    { seats: 'Sides', matinee: '+80%', evening: '+100%' },
-    { seats: 'Outer', matinee: '+50%', evening: '+70%' },
-    { seats: 'Centre', matinee: '+75%', evening: '+100%' },
-    { seats: 'Other', matinee: 'Base', evening: 'Base' },
-  ]);
-  readonly concessions = signal<ConcessionRow[]>([
-    { type: 'Under 16s', discount: 'As per theatre policy' },
-    { type: 'Over 70s', discount: 'As per theatre policy' },
-    { type: 'Group Booking (10+)', discount: 'As per theatre policy' },
-    { type: 'Loyalty Card', discount: '10% per ticket (best concession applied)' },
-  ]);
-
-  // ── Edit-pricing mode ───────────────────────────────────────────────────
-  readonly editingPricing = signal(false);
-  /** Working copies edited in the form; committed on Save. */
-  draftBasePrice = '';
-  draftStalls: PriceTier[] = [];
-  draftCircle: PriceTier[] = [];
-  draftUpperCircle: PriceTier[] = [];
-  draftConcessions: ConcessionRow[] = [];
-
-  startEditPricing() {
-    this.draftBasePrice = this.basePrice();
-    this.draftStalls = this.stalls().map((r) => ({ ...r }));
-    this.draftCircle = this.circle().map((r) => ({ ...r }));
-    this.draftUpperCircle = this.upperCircle().map((r) => ({ ...r }));
-    this.draftConcessions = this.concessions().map((r) => ({ ...r }));
-    this.editingPricing.set(true);
-  }
-
-  cancelPricing() {
-    this.editingPricing.set(false);
-  }
-
-  savePricing() {
-    this.basePrice.set(this.draftBasePrice);
-    this.stalls.set(this.draftStalls.map((r) => ({ ...r })));
-    this.circle.set(this.draftCircle.map((r) => ({ ...r })));
-    this.upperCircle.set(this.draftUpperCircle.map((r) => ({ ...r })));
-    this.concessions.set(this.draftConcessions.map((r) => ({ ...r })));
-    this.editingPricing.set(false);
+  /** Load the theatre's seat zones (used for the pricing tab + seat map). */
+  loadZones(): void {
+    this.zonesLoading.set(true);
+    this.zonesError.set(null);
+    this.seats.getAllSeatZones().subscribe({
+      next: (res) => {
+        this.zones.set(res.seatZones ?? []);
+        this.zonesLoading.set(false);
+      },
+      error: () => {
+        this.zonesError.set('Could not load seat zones.');
+        this.zonesLoading.set(false);
+      },
+    });
   }
 
   statusClass(s: string): string {
     switch (s) {
+      case 'Now Showing':
       case 'Active':
         return 'pill--success';
       case 'Upcoming':
         return 'pill--warning';
+      case 'Expired':
+        return 'pill--info';
       case 'Completed':
+      case 'Inactive':
         return 'pill--muted';
       default:
         return 'pill--info';
     }
   }
+}
+
+const LANGUAGE_LABEL: Record<string, string> = {
+  SINHALA: 'Sinhala',
+  TAMIL: 'Tamil',
+  ENGLISH: 'English',
+};
+
+const SECTION_LABEL: Record<SeatSection, string> = {
+  STALLS: 'Stalls',
+  CIRCLE: 'Circle',
+  UPPER_CIRCLE: 'Upper Circle',
+};
+
+/**
+ * Price a zone as baseCost × (1 + pct/100). `matineePct`/`eveningPct` are
+ * percentage uplifts over the base ticket cost. Returns "—" if unknown.
+ */
+function price(base: number | null, pct?: number): string {
+  if (base == null || pct == null) return '—';
+  const value = base * (1 + pct / 100);
+  return `LKR ${Math.round(value).toLocaleString('en-LK')}`;
+}
+
+/** Map a catalogue ProductionItem/Response to the view-model. */
+function toView(p: ProductionItem): ProductionView {
+  const title = p.title || 'Untitled';
+  const release = formatDate(p.releaseDate);
+  const end = formatDate(p.endDate);
+  const dates = release === '—' && end === '—' ? '—' : `${release} – ${end}`;
+  return {
+    id: p.productionId,
+    title,
+    status: deriveStatus(p),
+    dates,
+    venue: 'Main Theatre',
+    language: (p.language && LANGUAGE_LABEL[p.language]) || '—',
+    genre: p.genre || '—',
+    abbr: initials(title),
+    poster: posterSrc(p.posterImageUrl),
+    synopsis: p.description || 'No synopsis provided.',
+    ageRestriction: p.ageRestriction || '—',
+    duration: p.duration ? `${p.duration} minutes` : '—',
+    basePrice: p.baseTicketCost != null ? `LKR ${p.baseTicketCost.toLocaleString('en-LK')}` : '—',
+  };
+}
+
+/**
+ * status !== 1 → Inactive; future release → Upcoming; past end → Expired;
+ * otherwise Now Showing. Mirrors the productions list derivation.
+ */
+function deriveStatus(p: ProductionItem): ProductionView['status'] {
+  if (p.status !== 1) return 'Inactive';
+  if (isFuture(p.releaseDate)) return 'Upcoming';
+  if (isPast(p.endDate)) return 'Expired';
+  return 'Now Showing';
+}
+
+function isFuture(dateStr?: string): boolean {
+  const t = startOfDay(dateStr);
+  return t !== null && t > todayStart();
+}
+
+function isPast(dateStr?: string): boolean {
+  const t = startOfDay(dateStr);
+  return t !== null && t < todayStart();
+}
+
+function startOfDay(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (m) {
+    const [, y, mo, day] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(day)).getTime();
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function todayStart(): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today.getTime();
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function posterSrc(value?: string): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  if (v.startsWith('data:') || v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/')) {
+    return v;
+  }
+  const mime = v.startsWith('/9j') ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${v}`;
+}
+
+function initials(title: string): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '??';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
