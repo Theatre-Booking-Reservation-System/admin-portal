@@ -1,14 +1,15 @@
 // Production/default environment.
-// All microservices sit behind a single AWS ALB, routed by path prefix.
-const ALB = 'http://ec2-3-237-240-69.compute-1.amazonaws.com';
-
+// The site is served over HTTPS (Netlify) while the backend ALB is HTTP, so the
+// browser would block direct HTTP calls as mixed content. Instead, call each
+// service via a relative "/api/<service>/..." path. Netlify proxies these
+// server-side to the ALB (see netlify.toml), keeping the browser on HTTPS only.
 export const environment = {
   production: true,
   appName: 'Sapumal Theatre — Admin Panel',
   services: {
-    identity: `${ALB}/identity-service`,
-    catalogue: `${ALB}/catalogue-service`,
-    seat: `${ALB}/seat-service`,
-    booking: `${ALB}/booking-service`,
+    identity: '/api/identity',
+    catalogue: '/api/catalogue',
+    seat: '/api/seat',
+    booking: '/api/booking',
   },
 };

@@ -1,0 +1,40 @@
+[build]
+  command = "npm run build"
+  publish = "dist/admin-portal/browser"
+
+# --- API proxying ---------------------------------------------------------
+# The browser talks only HTTPS to Netlify; Netlify forwards these server-side
+# to the HTTP ALB, avoiding mixed-content blocking. Mirrors proxy.conf.js.
+# These must come BEFORE the SPA catch-all below.
+
+[[redirects]]
+  from = "/api/identity/*"
+  to = "http://ec2-3-237-240-69.compute-1.amazonaws.com/identity-service/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/catalogue/*"
+  to = "http://ec2-3-237-240-69.compute-1.amazonaws.com/catalogue-service/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/seat/*"
+  to = "http://ec2-3-237-240-69.compute-1.amazonaws.com/seat-service/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/booking/*"
+  to = "http://ec2-3-237-240-69.compute-1.amazonaws.com/booking-service/:splat"
+  status = 200
+  force = true
+
+# --- SPA fallback ----------------------------------------------------------
+# Any non-asset, non-api route returns index.html so Angular's router handles it.
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
