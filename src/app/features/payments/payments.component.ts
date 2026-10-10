@@ -68,6 +68,11 @@ export class PaymentsComponent {
     'Cash (Counter)': 'payments',
   };
 
+  /** Payments ordered newest-first by their date + time. */
+  private get sortedPayments(): Payment[] {
+    return [...this.payments].sort((a, b) => paymentTime(b) - paymentTime(a));
+  }
+
   readonly filters = computed<{ key: FilterKey; label: string; count: number }[]>(() => {
     const all = this.payments;
     return [
@@ -83,7 +88,7 @@ export class PaymentsComponent {
     const f = this.filter();
     const method = this.methodFilter();
     const statusDrop = this.statusFilter();
-    return this.payments.filter((p) => {
+    return this.sortedPayments.filter((p) => {
       const matchesTab = f === 'All' || p.status === f;
       const matchesMethod = method === 'All' || p.method === method;
       const matchesStatusDrop = statusDrop === 'All' || p.status === statusDrop;
@@ -178,4 +183,10 @@ export class PaymentsComponent {
     const stamp = new Date().toISOString().slice(0, 10);
     doc.save(`sapumal-payments-${stamp}.pdf`);
   }
+}
+
+/** Epoch millis for a payment's "DD Mon YYYY" + "h:mm AM/PM" strings (0 if unparseable). */
+function paymentTime(p: Payment): number {
+  const t = new Date(`${p.date} ${p.time}`).getTime();
+  return isNaN(t) ? 0 : t;
 }

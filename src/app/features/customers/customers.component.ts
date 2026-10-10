@@ -13,6 +13,8 @@ interface Customer {
   birthday: string;
   nic: string;
   joined: string;
+  /** Raw join timestamp for newest-first ordering. */
+  joinedSort: string;
   status: 'Active' | 'Inactive';
   locked: boolean;
   abbr: string;
@@ -74,7 +76,10 @@ export class CustomersComponent {
     this.patrons.listPatrons().subscribe({
       next: (res) => {
         const items = res.patrons ?? [];
-        this.customers.set(items.map((p) => toView(p)));
+        const rows = items.map((p) => toView(p));
+        // Newest-first by the date the patron account was added.
+        rows.sort((a, b) => (a.joinedSort < b.joinedSort ? 1 : a.joinedSort > b.joinedSort ? -1 : 0));
+        this.customers.set(rows);
         this.loading.set(false);
       },
       error: () => {
@@ -114,6 +119,7 @@ function toView(p: PatronSummary): Customer {
     birthday: formatDate(p.dateOfBirth),
     nic: p.nicPassportNo || '—',
     joined: formatDate(p.addedDate),
+    joinedSort: p.addedDate || '',
     // status 9 = locked account (too many failed sign-ins).
     status: 'Active',
     locked: p.status === 9,

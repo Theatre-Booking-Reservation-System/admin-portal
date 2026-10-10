@@ -15,6 +15,8 @@ interface Production {
   /** Raw ISO "YYYY-MM-DD" dates kept for range filtering. */
   releaseIso: string;
   endIso: string;
+  /** Original position in the API response (used for newest-first ordering). */
+  seq: number;
   status: 'Now Showing' | 'Inactive' | 'Upcoming' | 'Expired';
   abbr: string;
   /** Ready-to-use <img src>, or null to fall back to initials. */
@@ -101,7 +103,7 @@ export class ProductionsComponent {
     this.catalogue.getAllProductions().subscribe({
       next: (res) => {
         const items = res.productions ?? [];
-        this.productions.set(items.map((p) => toView(p)));
+        this.productions.set(sortNewestFirst(items.map((p, i) => toView(p, i))));
         this.loading.set(false);
       },
       error: () => {
@@ -180,7 +182,7 @@ const LANGUAGE_LABEL: Record<string, Production['language']> = {
 };
 
 /** Map a catalogue ProductionItem to the template's view-model. */
-function toView(p: ProductionItem): Production {
+function toView(p: ProductionItem, seq: number): Production {
   const title = p.title || 'Untitled';
   return {
     id: p.productionId,
@@ -194,7 +196,18 @@ function toView(p: ProductionItem): Production {
     status: deriveStatus(p),
     abbr: initials(title),
     poster: posterSrc(p.posterImageUrl),
+    seq,
   };
+}
+
+/**
+ * Order productions newest-first. The catalogue API doesn't expose a creation
+ * timestamp, so we approximate "most recently created" by the API's own insertion
+ * order: later rows in the response were added later, so a freshly-created
+ * production (which the API appends to the end) surfaces at the top of the table.
+ */
+function sortNewestFirst(list: Production[]): Production[] {
+  return [...list].sort((a, b) => b.seq - a.seq);
 }
 
 /**
