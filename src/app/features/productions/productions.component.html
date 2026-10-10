@@ -118,8 +118,8 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
-                   <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
-                <a class="icon-btn" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+                   <a class="icon-btn" role="button" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" role="button" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
              
                 <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="askDelete(p)"><mat-icon>delete</mat-icon></button>
               </div>
