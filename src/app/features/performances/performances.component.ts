@@ -10,6 +10,8 @@ interface Performance {
   id: string;
   date: string;
   time: string;
+  /** Raw "YYYY-MM-DDTHH:mm:ss" sort key for newest-first ordering. */
+  sortKey: string;
   production: string;
   showTitle: string;
   venue: string;
@@ -129,12 +131,15 @@ export class PerformancesComponent {
       dateFrom: this.dateFrom() || undefined,
       dateTo: this.dateTo() || undefined,
       size: 200,
-      sort: 'date,asc',
+      sort: 'date,desc',
     };
   }
 
   private setRows(items: PerformanceItem[]): void {
-    this.performances.set(items.map((pf) => toView(pf, this.productionsById.get(pf.productionId))));
+    const rows = items.map((pf) => toView(pf, this.productionsById.get(pf.productionId)));
+    // Newest-first by performance date+time, regardless of server ordering.
+    rows.sort((a, b) => (a.sortKey < b.sortKey ? 1 : a.sortKey > b.sortKey ? -1 : 0));
+    this.performances.set(rows);
   }
 
   // Filter change handlers — each re-queries /performances/search.
@@ -218,6 +223,7 @@ function toView(pf: PerformanceItem, prod?: ProductionItem): Performance {
     id: pf.performanceId,
     date: formatDate(pf.date),
     time: formatTime(pf.time),
+    sortKey: `${isoDate(pf.date)}T${normalizeTime(pf.time)}`,
     production: title,
     // "Show Title" column shows the session type (Matinee / Evening).
     showTitle: session,
@@ -281,6 +287,21 @@ function formatDate(dateStr?: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Normalise an API date/datetime to "YYYY-MM-DD" for sorting. */
+function isoDate(value?: string): string {
+  if (!value) return '';
+  return value.length > 10 ? value.slice(0, 10) : value;
+}
+
+/** Normalise a time to zero-padded "HH:mm:ss" for lexical sorting. */
+function normalizeTime(value?: string): string {
+  if (!value) return '00:00:00';
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(value.trim());
+  if (!m) return '00:00:00';
+  const [, h, mm, ss] = m;
+  return `${h.padStart(2, '0')}:${mm}:${ss ?? '00'}`;
 }
 
 /** "18:30:00" / "18:30" -> "6:30 PM". */

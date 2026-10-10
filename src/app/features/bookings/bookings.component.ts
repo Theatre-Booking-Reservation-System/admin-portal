@@ -14,6 +14,8 @@ interface BookingRow {
   customer: string;
   show: string;
   dateTime: string;
+  /** Raw creation timestamp for newest-first ordering. */
+  createdSort: string;
   amount: string;
   statusLabel: string;
   statusClass: string;
@@ -68,7 +70,10 @@ export class BookingsComponent {
     // Pull a generous window of recent bookings for the admin list.
     this.bookingApi.getRecentBookings(100).subscribe({
       next: (res) => {
-        this.rows.set((res.bookings ?? []).map(toRow));
+        const rows = (res.bookings ?? []).map(toRow);
+        // Newest-first by booking creation time.
+        rows.sort((a, b) => (a.createdSort < b.createdSort ? 1 : a.createdSort > b.createdSort ? -1 : 0));
+        this.rows.set(rows);
         this.loading.set(false);
       },
       error: () => {
@@ -117,6 +122,7 @@ function toRow(b: RecentBookingItem): BookingRow {
     customer: b.customerName || '—',
     show: b.showName || '—',
     dateTime: formatDateTime(b.performanceDate, b.performanceTime, b.createdAt),
+    createdSort: b.createdAt || '',
     amount: formatLkr(b.totalLkr),
     statusLabel: status.label,
     statusClass: status.cssClass,
