@@ -69,7 +69,7 @@
             </td>
             <td>
               <div class="actions">
-                <a class="icon-btn" [routerLink]="['/customers', c.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" role="button" [routerLink]="['/customers', c.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
                 @if (c.locked) {
                   <button class="icon-btn icon-btn--unlock" aria-label="Unlock account" (click)="unlock(c)"><mat-icon>lock_open</mat-icon></button>
                 }

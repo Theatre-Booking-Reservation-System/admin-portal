@@ -75,7 +75,11 @@
     <ul class="shows">
       @for (show of todayShows(); track $index) {
         <li class="show">
-          <span class="show__thumb">{{ show.abbr }}</span>
+          @if (show.poster) {
+            <img class="show__thumb show__thumb--img" [src]="show.poster" [alt]="show.title + ' poster'" />
+          } @else {
+            <span class="show__thumb">{{ show.abbr }}</span>
+          }
           <div class="show__meta">
             <span class="show__title">{{ show.title }}</span>
             <span class="show__time muted">{{ show.time }}</span>

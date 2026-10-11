@@ -29,17 +29,19 @@
   </header>
 
   @if (saveError()) {
-    <p class="err err--block"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
+    <p class="err err--block" role="alert"><mat-icon>error_outline</mat-icon> {{ saveError() }}</p>
   }
   @if (loadError()) {
-    <p class="err err--block"><mat-icon>error_outline</mat-icon> {{ loadError() }}</p>
+    <p class="err err--block" role="alert"><mat-icon>error_outline</mat-icon> {{ loadError() }}</p>
   }
 
   <section class="card">
     <h2 class="card-title">Schedule</h2>
 
-    <label class="lbl">Production <span class="req">*</span></label>
+    <label class="lbl" for="production">Production <span class="req" aria-hidden="true">*</span></label>
     <select
+      id="production"
+      aria-describedby="production-error"
       class="input"
       [ngModel]="production()"
       (ngModelChange)="onProductionChange($event)"
@@ -54,17 +56,19 @@
       @for (p of productions(); track p.id) { <option [value]="p.id">{{ p.title }}</option> }
     </select>
     @if (productionsError()) {
-      <span class="err"><mat-icon>error_outline</mat-icon> {{ productionsError() }}</span>
+      <span id="production-error" class="err" role="alert"><mat-icon>error_outline</mat-icon> {{ productionsError() }}</span>
     } @else if (productionCtrl.invalid && productionCtrl.touched) {
-      <span class="err"><mat-icon>error_outline</mat-icon> Please select a production.</span>
+      <span id="production-error" class="err" role="alert"><mat-icon>error_outline</mat-icon> Please select a production.</span>
     }
 
     <div class="grid-2-inner">
       <div>
-        <label class="lbl">Date <span class="req">*</span></label>
+        <label class="lbl" for="date">Date <span class="req" aria-hidden="true">*</span></label>
         <div class="input input--icon" [class.input--error]="poyaError() || rangeError()">
           <mat-icon>calendar_today</mat-icon>
           <input
+            id="date"
+            aria-describedby="date-error"
             type="date"
             [min]="dateMin()"
             [max]="dateMax() || null"
@@ -76,9 +80,9 @@
           />
         </div>
         @if (poyaError()) {
-          <span class="err"><mat-icon>block</mat-icon> {{ poyaError() }}</span>
+          <span id="date-error" class="err" role="alert"><mat-icon>block</mat-icon> {{ poyaError() }}</span>
         } @else if (rangeError()) {
-          <span class="err"><mat-icon>block</mat-icon> {{ rangeError() }}</span>
+          <span id="date-error" class="err" role="alert"><mat-icon>block</mat-icon> {{ rangeError() }}</span>
         } @else if (!production()) {
           <span class="hint muted">Select a production first to choose a date.</span>
         } @else {
@@ -86,24 +90,24 @@
         }
       </div>
       <div>
-        <label class="lbl">Time <span class="req">*</span></label>
+        <label class="lbl" for="time">Time <span class="req" aria-hidden="true">*</span></label>
         <div class="input input--icon" [class.input--error]="timeCtrl.invalid && timeCtrl.touched">
           <mat-icon>schedule</mat-icon>
-          <input type="time" [(ngModel)]="time" name="time" required #timeCtrl="ngModel" />
+          <input id="time" aria-describedby="time-error" type="time" [(ngModel)]="time" name="time" required #timeCtrl="ngModel" />
         </div>
         @if (timeCtrl.invalid && timeCtrl.touched) {
-          <span class="err"><mat-icon>error_outline</mat-icon> Time is required.</span>
+          <span id="time-error" class="err" role="alert"><mat-icon>error_outline</mat-icon> Time is required.</span>
         }
       </div>
     </div>
 
-    <label class="lbl">Session Type <span class="req">*</span></label>
-    <select class="input" [(ngModel)]="sessionType" name="sessionType" required #sessionCtrl="ngModel">
+    <label class="lbl" for="sessionType">Session Type <span class="req" aria-hidden="true">*</span></label>
+    <select id="sessionType" aria-describedby="session-type-error" class="input" [(ngModel)]="sessionType" name="sessionType" required #sessionCtrl="ngModel">
       <option value="" disabled selected>Select session type</option>
       @for (s of sessionTypes; track s) { <option [value]="s">{{ s }}</option> }
     </select>
     @if (sessionCtrl.invalid && sessionCtrl.touched) {
-      <span class="err"><mat-icon>error_outline</mat-icon> Please select a session type.</span>
+      <span id="session-type-error" class="err" role="alert"><mat-icon>error_outline</mat-icon> Please select a session type.</span>
     }
   </section>
 </form>

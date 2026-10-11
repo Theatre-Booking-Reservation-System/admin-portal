@@ -109,7 +109,7 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
-                <a class="icon-btn" [routerLink]="['/payments', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" role="button" [routerLink]="['/payments', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
               </div>
             </td>
           </tr>

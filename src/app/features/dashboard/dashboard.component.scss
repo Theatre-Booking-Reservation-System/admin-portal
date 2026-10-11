@@ -257,6 +257,10 @@
   font-size: 0.85rem;
   flex: none;
 }
+.show__thumb--img {
+  object-fit: cover;
+  background: var(--brand-surface-2);
+}
 .show__meta {
   display: flex;
   flex-direction: column;

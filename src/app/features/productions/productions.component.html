@@ -118,8 +118,8 @@
             <td><span class="pill" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td>
               <div class="actions">
-                   <a class="icon-btn" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
-                <a class="icon-btn" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
+                   <a class="icon-btn" role="button" [routerLink]="['/productions', p.id]" aria-label="View"><mat-icon>visibility</mat-icon></a>
+                <a class="icon-btn" role="button" [routerLink]="['/productions', p.id, 'edit']" aria-label="Edit"><mat-icon>edit</mat-icon></a>
              
                 <button class="icon-btn icon-btn--danger" aria-label="Delete" (click)="askDelete(p)"><mat-icon>delete</mat-icon></button>
               </div>
@@ -163,7 +163,7 @@
         This will permanently delete <strong>{{ target.title }}</strong>. This action cannot be undone.
       </p>
       @if (deleteError()) {
-        <p class="field-error"><mat-icon>error_outline</mat-icon> {{ deleteError() }}</p>
+        <p class="field-error" role="alert"><mat-icon>error_outline</mat-icon> {{ deleteError() }}</p>
       }
       <div class="modal__actions">
         <button class="btn btn--ghost" (click)="cancelDelete()" [disabled]="deleting()">Cancel</button>

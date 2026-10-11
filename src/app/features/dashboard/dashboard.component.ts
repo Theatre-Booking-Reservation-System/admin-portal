@@ -24,6 +24,8 @@ interface TodayShow {
   time: string;
   session: 'Matinee' | 'Evening';
   abbr: string;
+  /** Ready-to-use <img src> for the production poster, or null to fall back to initials. */
+  poster: string | null;
 }
 
 interface RecentBookingRow {
@@ -205,7 +207,25 @@ function showToView(pf: PerformanceItem, prod?: ProductionItem): TodayShow {
     session,
     time: time ? `${session} | ${time}` : session,
     abbr: initials(title),
+    poster: posterSrc(prod?.posterImageUrl),
   };
+}
+
+/**
+ * Normalise the API's posterImageUrl into an <img src>.
+ * Accepts a full data URL, a raw base64 string, or a normal http(s) URL.
+ * Returns null when there's nothing usable so the UI falls back to initials.
+ */
+function posterSrc(value?: string): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  // Already a data URL or an absolute/relative URL — use as-is.
+  if (v.startsWith('data:') || v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/')) {
+    return v;
+  }
+  // Otherwise treat it as raw base64 image data. JPEG data starts with "/9j".
+  const mime = v.startsWith('/9j') ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${v}`;
 }
 
 /** Normalize the API's monthly overview into 0..1 bar/line fractions. */

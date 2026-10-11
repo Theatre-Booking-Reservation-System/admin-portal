@@ -139,7 +139,7 @@
         for refund. This action cannot be undone.
       </p>
       @if (cancelError()) {
-        <p class="field-error"><mat-icon>error_outline</mat-icon> {{ cancelError() }}</p>
+        <p class="field-error" role="alert"><mat-icon>error_outline</mat-icon> {{ cancelError() }}</p>
       }
       <div class="modal__actions">
         <button class="btn btn--ghost" (click)="dismissCancel()" [disabled]="cancelling()">Keep booking</button>

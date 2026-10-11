@@ -129,6 +129,17 @@ a {
   text-decoration: none;
 }
 
+/* ── Keyboard focus visibility ───────────────────────────────────────────────
+   Many controls set `outline: none` for a custom look; this restores a clear,
+   consistent focus indicator for keyboard users (shown only on keyboard focus,
+   not on mouse click, via :focus-visible). Covers search boxes, filter
+   selects, links, buttons and any element made focusable with tabindex. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand-maroon);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ── Reusable helpers ────────────────────────────────────────────────────── */
 .page-title {
   font-size: 1.5rem;
